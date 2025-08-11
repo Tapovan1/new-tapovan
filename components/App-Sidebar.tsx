@@ -12,9 +12,6 @@ import {
   ClipboardList,
   BarChart3,
   Calendar,
-  Settings,
-  Award,
-  BookMarked,
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -186,14 +183,14 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   const getRoleBadgeColor = (role: string) => {
     switch (role.toLowerCase()) {
       case "admin":
-        return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+        return "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800";
       case "teacher":
       case "ateacher":
-        return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
+        return "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800";
       case "student":
-        return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
+        return "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800";
       default:
-        return "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400";
+        return "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-900/40 dark:text-gray-300 dark:border-gray-800";
     }
   };
 
@@ -202,25 +199,25 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
     return (
       <Sidebar
         {...props}
-        className="!w-64 bg-white dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-700"
+        className="!w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg"
       >
         <SidebarHeader>
-          <div className="flex items-center gap-3 p-6 border-b border-slate-200 dark:border-slate-700">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+          <div className="flex items-center gap-3 p-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
               <GraduationCap className="w-7 h-7 text-white" />
             </div>
             <div className="flex-1">
-              <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse mb-2"></div>
-              <div className="h-3 bg-slate-100 dark:bg-slate-600 rounded animate-pulse w-2/3"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2"></div>
+              <div className="h-3 bg-gray-100 dark:bg-gray-600 rounded animate-pulse w-2/3"></div>
             </div>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="bg-white dark:bg-gray-900">
           <div className="p-4 space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="h-10 bg-slate-100 dark:bg-slate-700 rounded-xl animate-pulse"
+                className="h-10 bg-gray-100 dark:bg-gray-700 rounded-xl animate-pulse"
               ></div>
             ))}
           </div>
@@ -233,29 +230,49 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
   return (
     <Sidebar
       {...props}
-      className="!w-64 bg-white dark:bg-slate-900/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-700 shadow-2xl"
+      className="!w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-lg"
     >
       {/* Header */}
-      <SidebarHeader>
-        <div className="flex items-center gap-3 p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/25">
+      <SidebarHeader className="bg-white dark:bg-gray-900">
+        <div className="flex items-center gap-3 p-6 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
             <GraduationCap className="w-7 h-7 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
+            <p className="text-lg font-bold text-gray-900 dark:text-white tracking-tight truncate">
               {getPortalTitle(user.role)}
             </p>
-            <Badge className={`text-xs mt-1 ${getRoleBadgeColor(user.role)}`}>
+            <Badge
+              variant="outline"
+              className={`text-xs mt-1 font-medium ${getRoleBadgeColor(
+                user.role
+              )}`}
+            >
               {user.role.toUpperCase()}
             </Badge>
           </div>
         </div>
 
         {/* User Info */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-xl flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {user.email}
+              </p>
+            </div>
+          </div>
+        </div>
       </SidebarHeader>
 
       {/* Navigation */}
-      <SidebarContent>
+      <SidebarContent className="bg-white dark:bg-gray-900">
         <nav className="flex-1 p-4 space-y-2">
           {navigation.length > 0 ? (
             navigation.map((item) => {
@@ -266,8 +283,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
                     item.current
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25"
-                      : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white"
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <Icon
@@ -282,7 +299,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
               );
             })
           ) : (
-            <div className="text-slate-400 text-sm px-4 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+            <div className="text-gray-500 dark:text-gray-400 text-sm px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
               No navigation items available for your role.
             </div>
           )}
@@ -290,11 +307,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       </SidebarContent>
 
       {/* Footer */}
-      <SidebarFooter>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+      <SidebarFooter className="bg-white dark:bg-gray-900">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
+            className="w-full flex items-center justify-start gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200 group"
           >
             <LogOut className="w-5 h-5 flex-shrink-0 group-hover:scale-110 transition-transform duration-200" />
             <span className="truncate">Sign Out</span>
@@ -302,9 +319,9 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </div>
 
         {/* Footer info */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-          <div className="text-xs text-slate-500 dark:text-slate-400 text-center">
-            © 2024 Student Portal
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+            © {new Date().getFullYear()} Student Portal
           </div>
         </div>
       </SidebarFooter>
