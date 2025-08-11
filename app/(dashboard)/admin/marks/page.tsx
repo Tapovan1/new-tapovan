@@ -1,12 +1,24 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Search,
@@ -19,8 +31,8 @@ import {
   FileText,
   BarChart3,
   GraduationCap,
-} from "lucide-react"
-import Link from "next/link"
+} from "lucide-react";
+import Link from "next/link";
 
 // Sample marks data
 const marksData = [
@@ -89,95 +101,128 @@ const marksData = [
     grade: "A+",
     date: "2024-01-15",
   },
-]
+];
 
-const subjects = ["Mathematics", "Science", "English", "Hindi", "Social Studies"]
-const examTypes = ["Unit Test 1", "Unit Test 2", "Mid Term", "Final Exam", "Assignment"]
+const subjects = [
+  "Mathematics",
+  "Science",
+  "English",
+  "Hindi",
+  "Social Studies",
+];
+const examTypes = [
+  "Unit Test 1",
+  "Unit Test 2",
+  "Mid Term",
+  "Final Exam",
+  "Assignment",
+];
 
 export default function AdminMarks() {
-  const [admin, setAdmin] = useState<any>(null)
-  const [marks, setMarks] = useState(marksData)
-  const [filteredMarks, setFilteredMarks] = useState(marksData)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [filterStandard, setFilterStandard] = useState("all")
-  const [filterClass, setFilterClass] = useState("all")
-  const [filterSubject, setFilterSubject] = useState("all")
-  const [filterExamType, setFilterExamType] = useState("all")
+  const [admin, setAdmin] = useState<any>(null);
+  const [marks, setMarks] = useState(marksData);
+  const [filteredMarks, setFilteredMarks] = useState(marksData);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStandard, setFilterStandard] = useState("all");
+  const [filterClass, setFilterClass] = useState("all");
+  const [filterSubject, setFilterSubject] = useState("all");
+  const [filterExamType, setFilterExamType] = useState("all");
 
   useEffect(() => {
-    const adminData = localStorage.getItem("admin")
-    if (adminData) {
-      setAdmin(JSON.parse(adminData))
-    } else {
-      window.location.href = "/"
-    }
-  }, [])
-
-  useEffect(() => {
-    let filtered = marks
+    let filtered = marks;
 
     if (searchTerm) {
       filtered = filtered.filter(
         (mark) =>
           mark.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          mark.subject.toLowerCase().includes(searchTerm.toLowerCase()),
-      )
+          mark.subject.toLowerCase().includes(searchTerm.toLowerCase())
+      );
     }
 
     if (filterStandard !== "all") {
-      filtered = filtered.filter((mark) => mark.standard.toString() === filterStandard)
+      filtered = filtered.filter(
+        (mark) => mark.standard.toString() === filterStandard
+      );
     }
 
     if (filterClass !== "all") {
-      filtered = filtered.filter((mark) => mark.class.toLowerCase() === filterClass)
+      filtered = filtered.filter(
+        (mark) => mark.class.toLowerCase() === filterClass
+      );
     }
 
     if (filterSubject !== "all") {
-      filtered = filtered.filter((mark) => mark.subject === filterSubject)
+      filtered = filtered.filter((mark) => mark.subject === filterSubject);
     }
 
     if (filterExamType !== "all") {
-      filtered = filtered.filter((mark) => mark.examType === filterExamType)
+      filtered = filtered.filter((mark) => mark.examType === filterExamType);
     }
 
-    setFilteredMarks(filtered)
-  }, [searchTerm, filterStandard, filterClass, filterSubject, filterExamType, marks])
+    setFilteredMarks(filtered);
+  }, [
+    searchTerm,
+    filterStandard,
+    filterClass,
+    filterSubject,
+    filterExamType,
+    marks,
+  ]);
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
       case "A+":
-        return "bg-green-500/20 text-green-300"
+        return "bg-green-500/20 text-green-300";
       case "A":
-        return "bg-blue-500/20 text-blue-300"
+        return "bg-blue-500/20 text-blue-300";
       case "B+":
-        return "bg-yellow-500/20 text-yellow-300"
+        return "bg-yellow-500/20 text-yellow-300";
       case "B":
-        return "bg-orange-500/20 text-orange-300"
+        return "bg-orange-500/20 text-orange-300";
       default:
-        return "bg-red-500/20 text-red-300"
+        return "bg-red-500/20 text-red-300";
     }
-  }
+  };
 
   const calculateStats = () => {
-    const totalMarks = filteredMarks.reduce((sum, mark) => sum + mark.obtainedMarks, 0)
-    const avgMarks = filteredMarks.length > 0 ? (totalMarks / filteredMarks.length).toFixed(1) : "0"
-    const highestMarks = filteredMarks.length > 0 ? Math.max(...filteredMarks.map((m) => m.obtainedMarks)) : 0
-    const lowestMarks = filteredMarks.length > 0 ? Math.min(...filteredMarks.map((m) => m.obtainedMarks)) : 0
+    const totalMarks = filteredMarks.reduce(
+      (sum, mark) => sum + mark.obtainedMarks,
+      0
+    );
+    const avgMarks =
+      filteredMarks.length > 0
+        ? (totalMarks / filteredMarks.length).toFixed(1)
+        : "0";
+    const highestMarks =
+      filteredMarks.length > 0
+        ? Math.max(...filteredMarks.map((m) => m.obtainedMarks))
+        : 0;
+    const lowestMarks =
+      filteredMarks.length > 0
+        ? Math.min(...filteredMarks.map((m) => m.obtainedMarks))
+        : 0;
 
-    return { avgMarks, highestMarks, lowestMarks, totalStudents: filteredMarks.length }
-  }
+    return {
+      avgMarks,
+      highestMarks,
+      lowestMarks,
+      totalStudents: filteredMarks.length,
+    };
+  };
 
-  const stats = calculateStats()
+  const stats = calculateStats();
 
   const exportMarks = () => {
-    alert("Exporting marks data to Excel. This will be implemented with backend integration!")
-  }
+    alert(
+      "Exporting marks data to Excel. This will be implemented with backend integration!"
+    );
+  };
 
   const generateReport = () => {
-    alert("Generating detailed marks report with analytics. This will be implemented with backend integration!")
-  }
-
-  if (!admin) return <div>Loading...</div>
+    alert(
+      "Generating detailed marks report with analytics. This will be implemented with backend integration!"
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -186,7 +231,11 @@ export default function AdminMarks() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/admin/dashboard">
-              <Button variant="ghost" size="sm" className="text-slate-300 hover:bg-slate-800">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:bg-slate-800"
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Dashboard
               </Button>
@@ -208,7 +257,10 @@ export default function AdminMarks() {
               <Download className="h-4 w-4 mr-2" />
               Export Excel
             </Button>
-            <Button onClick={generateReport} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button
+              onClick={generateReport}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
               <FileText className="h-4 w-4 mr-2" />
               Generate Report
             </Button>
@@ -227,7 +279,9 @@ export default function AdminMarks() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm">Total Students</p>
-                  <p className="text-white text-xl font-bold">{stats.totalStudents}</p>
+                  <p className="text-white text-xl font-bold">
+                    {stats.totalStudents}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -241,7 +295,9 @@ export default function AdminMarks() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm">Average Marks</p>
-                  <p className="text-white text-xl font-bold">{stats.avgMarks}%</p>
+                  <p className="text-white text-xl font-bold">
+                    {stats.avgMarks}%
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -255,7 +311,9 @@ export default function AdminMarks() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm">Highest Score</p>
-                  <p className="text-white text-xl font-bold">{stats.highestMarks}</p>
+                  <p className="text-white text-xl font-bold">
+                    {stats.highestMarks}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -269,7 +327,9 @@ export default function AdminMarks() {
                 </div>
                 <div>
                   <p className="text-slate-400 text-sm">Lowest Score</p>
-                  <p className="text-white text-xl font-bold">{stats.lowestMarks}</p>
+                  <p className="text-white text-xl font-bold">
+                    {stats.lowestMarks}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -301,7 +361,10 @@ export default function AdminMarks() {
 
               <div className="space-y-2">
                 <Label className="text-slate-200">Standard</Label>
-                <Select value={filterStandard} onValueChange={setFilterStandard}>
+                <Select
+                  value={filterStandard}
+                  onValueChange={setFilterStandard}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -356,7 +419,11 @@ export default function AdminMarks() {
                       All Subjects
                     </SelectItem>
                     {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject} className="text-white">
+                      <SelectItem
+                        key={subject}
+                        value={subject}
+                        className="text-white"
+                      >
                         {subject}
                       </SelectItem>
                     ))}
@@ -366,7 +433,10 @@ export default function AdminMarks() {
 
               <div className="space-y-2">
                 <Label className="text-slate-200">Exam Type</Label>
-                <Select value={filterExamType} onValueChange={setFilterExamType}>
+                <Select
+                  value={filterExamType}
+                  onValueChange={setFilterExamType}
+                >
                   <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
                     <SelectValue />
                   </SelectTrigger>
@@ -375,7 +445,11 @@ export default function AdminMarks() {
                       All Exams
                     </SelectItem>
                     {examTypes.map((examType) => (
-                      <SelectItem key={examType} value={examType} className="text-white">
+                      <SelectItem
+                        key={examType}
+                        value={examType}
+                        className="text-white"
+                      >
                         {examType}
                       </SelectItem>
                     ))}
@@ -400,38 +474,72 @@ export default function AdminMarks() {
               <BookOpen className="h-5 w-5" />
               Student Marks
             </CardTitle>
-            <CardDescription className="text-slate-400">View and manage student examination results</CardDescription>
+            <CardDescription className="text-slate-400">
+              View and manage student examination results
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-slate-800">
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Roll No</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Student Name</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Subject</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Exam Type</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Marks</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Grade</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Percentage</th>
-                    <th className="text-left py-3 px-4 text-slate-300 font-medium">Date</th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Roll No
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Student Name
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Subject
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Exam Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Marks
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Grade
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Percentage
+                    </th>
+                    <th className="text-left py-3 px-4 text-slate-300 font-medium">
+                      Date
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredMarks.map((mark) => (
-                    <tr key={mark.id} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                      <td className="py-3 px-4 text-slate-300">{mark.rollNo}</td>
-                      <td className="py-3 px-4 text-white font-medium">{mark.studentName}</td>
-                      <td className="py-3 px-4 text-slate-300">{mark.subject}</td>
-                      <td className="py-3 px-4 text-slate-300">{mark.examType}</td>
+                    <tr
+                      key={mark.id}
+                      className="border-b border-slate-800/50 hover:bg-slate-800/30"
+                    >
+                      <td className="py-3 px-4 text-slate-300">
+                        {mark.rollNo}
+                      </td>
+                      <td className="py-3 px-4 text-white font-medium">
+                        {mark.studentName}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">
+                        {mark.subject}
+                      </td>
+                      <td className="py-3 px-4 text-slate-300">
+                        {mark.examType}
+                      </td>
                       <td className="py-3 px-4 text-white">
                         {mark.obtainedMarks}/{mark.maxMarks}
                       </td>
                       <td className="py-3 px-4">
-                        <Badge className={getGradeColor(mark.grade)}>{mark.grade}</Badge>
+                        <Badge className={getGradeColor(mark.grade)}>
+                          {mark.grade}
+                        </Badge>
                       </td>
                       <td className="py-3 px-4 text-white font-medium">
-                        {((mark.obtainedMarks / mark.maxMarks) * 100).toFixed(1)}%
+                        {((mark.obtainedMarks / mark.maxMarks) * 100).toFixed(
+                          1
+                        )}
+                        %
                       </td>
                       <td className="py-3 px-4 text-slate-300">{mark.date}</td>
                     </tr>
@@ -443,5 +551,5 @@ export default function AdminMarks() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
