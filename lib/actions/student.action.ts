@@ -333,8 +333,7 @@ export async function bulkCreateStudents(studentsData: any[]) {
     const results = [];
 
     for (const studentData of studentsData) {
-      const { grNo, name, parentName, parentPhone, standard, className } =
-        studentData;
+      const { grNo, name, enrollmentNo, standard, className } = studentData;
 
       // Validate standard-class combination
       if (!isValidStandardClassCombination(standard, className)) {
@@ -355,18 +354,6 @@ export async function bulkCreateStudents(studentsData: any[]) {
 
       // Auto-generate roll number
       const rollNo = await getNextRollNo(standard, className);
-
-      // Generate enrollment number
-      const enrollmentNo = generateEnrollmentNo(standard, rollNo);
-
-      // Check if enrollment number already exists
-      const existingEnrollment = await prisma.student.findUnique({
-        where: { enrollmentNo },
-      });
-      if (existingEnrollment) {
-        results.push({ error: `Enrollment number conflict for ${name}` });
-        continue;
-      }
 
       const student = await prisma.student.create({
         data: {

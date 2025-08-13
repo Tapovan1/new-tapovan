@@ -28,14 +28,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowLeft,
   Users,
   Search,
   Award,
   BookOpen,
   UserCheck,
+  Filter,
 } from "lucide-react";
-import Link from "next/link";
 import AddAssignmentDialog from "./add-assignment-dialog";
 // import BulkAssignmentDialog from "./bulk-assignment-dialog"
 import EditAssignmentDialog from "./edit-assignment-dialog";
@@ -95,22 +94,27 @@ export default function TeacherAssignments({
   const allSubjects = getAllSubjects();
 
   return (
-    <div className="min-h-screen bg-slate-950">
-      {/* Top Navigation */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="max-w-7xl mx-auto p-6 space-y-8">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/20 rounded-lg">
-                <UserCheck className="h-6 w-6 text-blue-400" />
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-14 h-14 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center shadow-lg">
+                  <UserCheck className="h-7 w-7 text-primary-foreground" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center">
+                  <BookOpen className="h-3 w-3 text-white" />
+                </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
                   Teacher Assignments
                 </h1>
-                <p className="text-sm text-slate-400">
-                  Manage teacher class and subject assignments
+                <p className="text-muted-foreground mt-1">
+                  Manage teacher class and subject assignments across all
+                  standards
                 </p>
               </div>
             </div>
@@ -120,49 +124,52 @@ export default function TeacherAssignments({
             {/* <BulkAssignmentDialog teachers={allTeachers} /> */}
           </div>
         </div>
-      </div>
 
-      <div className="p-6 space-y-6">
         {/* Search and Filters */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="border-0 bg-card/50 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Search className="h-5 w-5" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Filter className="h-5 w-5 text-primary" />
               Search & Filter
             </CardTitle>
+            <CardDescription>
+              Find teachers and filter by standards or subjects
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
-                <Label className="text-slate-200">Search Teachers</Label>
+                <Label className="text-foreground font-medium">
+                  Search Teachers
+                </Label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search by name or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="bg-slate-700/50 border-slate-600 text-white pl-10"
+                    className="pl-10 h-11 bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Standard</Label>
+                <Label className="text-foreground font-medium">Standard</Label>
                 <Select
                   value={filterStandard}
                   onValueChange={setFilterStandard}
                 >
-                  <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                  <SelectTrigger className="h-11 bg-background/50 border-border/50 focus:border-primary/50">
                     <SelectValue placeholder="All Standards" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all" className="text-white">
+                  <SelectContent className="border-0 bg-card/95 backdrop-blur-sm shadow-xl">
+                    <SelectItem value="all" className="focus:bg-muted/50">
                       All Standards
                     </SelectItem>
                     {standardsList.map((standard) => (
                       <SelectItem
                         key={standard}
                         value={standard}
-                        className="text-white"
+                        className="focus:bg-muted/50"
                       >
                         {standard === "KG1" || standard === "KG2"
                           ? standard
@@ -173,20 +180,20 @@ export default function TeacherAssignments({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Subject</Label>
+                <Label className="text-foreground font-medium">Subject</Label>
                 <Select value={filterSubject} onValueChange={setFilterSubject}>
-                  <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                  <SelectTrigger className="h-11 bg-background/50 border-border/50 focus:border-primary/50">
                     <SelectValue placeholder="All Subjects" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
-                    <SelectItem value="all" className="text-white">
+                  <SelectContent className="border-0 bg-card/95 backdrop-blur-sm shadow-xl">
+                    <SelectItem value="all" className="focus:bg-muted/50">
                       All Subjects
                     </SelectItem>
                     {allSubjects.map((subject) => (
                       <SelectItem
                         key={subject}
                         value={subject}
-                        className="text-white"
+                        className="focus:bg-muted/50"
                       >
                         {subject}
                       </SelectItem>
@@ -195,9 +202,14 @@ export default function TeacherAssignments({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-200">Results</Label>
-                <div className="bg-slate-700/50 border border-slate-600 rounded-md px-3 py-2 text-white">
-                  {filteredTeachers.length} teachers
+                <Label className="text-foreground font-medium">Results</Label>
+                <div className="bg-muted/50 border border-border/50 rounded-lg px-4 py-2.5 h-11 flex items-center">
+                  <span className="text-foreground font-semibold">
+                    {filteredTeachers.length}
+                  </span>
+                  <span className="text-muted-foreground ml-1">
+                    {filteredTeachers.length === 1 ? "teacher" : "teachers"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -205,13 +217,13 @@ export default function TeacherAssignments({
         </Card>
 
         {/* Teacher Assignments Overview */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="border-0 bg-card/50 backdrop-blur-sm shadow-lg">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Users className="h-5 w-5" />
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
               Teacher Assignments Overview ({filteredTeachers.length} Teachers)
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription>
               All teachers with their complete assignment details
             </CardDescription>
           </CardHeader>
@@ -219,77 +231,112 @@ export default function TeacherAssignments({
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-slate-700">
-                    <TableHead className="text-slate-300">Teacher</TableHead>
-                    <TableHead className="text-slate-300">
+                  <TableRow className="border-border/50">
+                    <TableHead className="text-muted-foreground font-semibold">
+                      Teacher
+                    </TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">
                       Total Assignments
                     </TableHead>
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-muted-foreground font-semibold">
                       Class Teacher Of
                     </TableHead>
-                    <TableHead className="text-slate-300">
+                    <TableHead className="text-muted-foreground font-semibold">
                       All Assignments
                     </TableHead>
-                    <TableHead className="text-slate-300">Actions</TableHead>
+                    <TableHead className="text-muted-foreground font-semibold">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTeachers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-8 text-center">
-                        <p className="text-slate-400">
-                          {searchTerm ||
-                          filterStandard !== "all" ||
-                          filterSubject !== "all"
-                            ? "No teachers found matching the filters"
-                            : "No teachers found"}
-                        </p>
-                        {(searchTerm ||
-                          filterStandard !== "all" ||
-                          filterSubject !== "all") && (
-                          <button
-                            onClick={() => {
-                              setSearchTerm("");
-                              setFilterStandard("all");
-                              setFilterSubject("all");
-                            }}
-                            className="text-blue-400 hover:underline text-sm mt-1"
-                          >
-                            Clear filters
-                          </button>
-                        )}
+                      <TableCell colSpan={5} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-4">
+                          <div className="w-20 h-20 bg-muted/50 rounded-full flex items-center justify-center">
+                            <Users className="h-10 w-10 text-muted-foreground/50" />
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground text-lg font-medium">
+                              {searchTerm ||
+                              filterStandard !== "all" ||
+                              filterSubject !== "all"
+                                ? "No teachers found matching the filters"
+                                : "No teachers found"}
+                            </p>
+                            <p className="text-muted-foreground/70 text-sm mt-1">
+                              {searchTerm ||
+                              filterStandard !== "all" ||
+                              filterSubject !== "all"
+                                ? "Try adjusting your search criteria"
+                                : "Add teacher assignments to get started"}
+                            </p>
+                          </div>
+                          {(searchTerm ||
+                            filterStandard !== "all" ||
+                            filterSubject !== "all") && (
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setSearchTerm("");
+                                setFilterStandard("all");
+                                setFilterSubject("all");
+                              }}
+                              className="mt-2"
+                            >
+                              Clear filters
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredTeachers.map((teacher) => (
-                      <TableRow key={teacher.id} className="border-slate-700">
-                        <TableCell className="text-white font-medium">
-                          <div>
-                            <div className="font-semibold">{teacher.name}</div>
-                            <div className="text-sm text-slate-400">
-                              {teacher.email}
+                      <TableRow
+                        key={teacher.id}
+                        className="border-border/30 hover:bg-muted/30 transition-colors"
+                      >
+                        <TableCell className="text-foreground font-medium">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-md">
+                              <span className="text-primary-foreground font-semibold text-sm">
+                                {teacher.name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .slice(0, 2)}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-foreground">
+                                {teacher.name}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {teacher.email}
+                              </div>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-foreground">
                           <Badge
                             variant="outline"
-                            className="border-blue-500 text-blue-300"
+                            className="border-primary/30 text-primary bg-primary/5"
                           >
                             {teacher.totalAssignments} assignments
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-slate-300">
+                        <TableCell className="text-foreground">
                           <div className="space-y-1">
                             {teacher.assignments.length === 0 ? (
-                              <span className="text-slate-500 text-sm">
+                              <span className="text-muted-foreground text-sm">
                                 None
                               </span>
                             ) : (
                               teacher.assignments.map((assignment) => (
                                 <Badge
                                   key={assignment.id}
-                                  className="bg-green-500/20 text-green-300 mr-1 mb-1"
+                                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20 mr-1 mb-1"
                                 >
                                   <Award className="h-3 w-3 mr-1" />
                                   {assignment.standardName === "KG1" ||
@@ -302,32 +349,34 @@ export default function TeacherAssignments({
                             )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-slate-300">
-                          <div className="space-y-1 max-w-md">
+                        <TableCell className="text-foreground">
+                          <div className="space-y-2 max-w-md">
                             {teacher.assignments.map((assignment) => (
                               <div
                                 key={assignment.id}
-                                className="flex items-center justify-between bg-slate-800/30 p-2 rounded text-sm"
+                                className="flex items-center justify-between bg-muted/30 p-3 rounded-lg border border-border/30"
                               >
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-3">
                                   <Badge
                                     variant="outline"
-                                    className="border-slate-600 text-slate-300 text-xs"
+                                    className="border-border/50 text-muted-foreground text-xs"
                                   >
                                     {assignment.standardName === "KG1" ||
                                     assignment.standardName === "KG2"
                                       ? assignment.standardName
                                       : `Std ${assignment.standardName}`}
                                   </Badge>
-                                  <span className="text-white">
+                                  <span className="text-foreground font-medium">
                                     {assignment.className}
                                   </span>
-                                  <span className="text-slate-400">•</span>
-                                  <span className="text-blue-300">
+                                  <span className="text-muted-foreground">
+                                    •
+                                  </span>
+                                  <span className="text-primary font-medium">
                                     {assignment.subject}
                                   </span>
                                   {assignment.isClassTeacher && (
-                                    <Award className="h-3 w-3 text-green-400" />
+                                    <Award className="h-3 w-3 text-emerald-500" />
                                   )}
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -355,7 +404,7 @@ export default function TeacherAssignments({
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="outline"
-                              className="border-slate-600 text-slate-300"
+                              className="border-border/50 text-muted-foreground"
                             >
                               <BookOpen className="h-3 w-3 mr-1" />
                               {teacher.assignments.length}

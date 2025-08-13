@@ -17,18 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft,
   Search,
   Calendar,
-  Download,
   Users,
   TrendingUp,
-  FileText,
   Loader2,
+  BarChart3,
+  FileSpreadsheet,
 } from "lucide-react";
-import Link from "next/link";
 import { getAttendanceReport } from "@/lib/actions/admin-attendance.action";
 import {
   getStandardsList,
@@ -178,7 +175,7 @@ export default function AttendanceReportClient() {
       : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950/30 transition-colors duration-300">
       {/* Custom Scrollbar Styles */}
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
@@ -186,62 +183,131 @@ export default function AttendanceReportClient() {
           width: 8px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgb(30 41 59 / 0.5);
+          background: rgb(148 163 184 / 0.1);
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgb(71 85 105 / 0.8);
+          background: rgb(148 163 184 / 0.3);
           border-radius: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgb(100 116 139 / 0.9);
+          background: rgb(148 163 184 / 0.5);
         }
         .custom-scrollbar::-webkit-scrollbar-corner {
-          background: rgb(30 41 59 / 0.5);
+          background: rgb(148 163 184 / 0.1);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgb(71 85 105 / 0.2);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgb(71 85 105 / 0.4);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgb(71 85 105 / 0.6);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-corner {
+          background: rgb(71 85 105 / 0.2);
         }
       `}</style>
 
       {/* Top Navigation */}
-      <div className="bg-slate-900 border-b border-slate-800 px-2 sm:px-6 py-4">
+      <div className="bg-white/80 dark:bg-gray-900/90 backdrop-blur-lg border-b border-slate-200 dark:border-gray-600/50 px-4 sm:px-6 py-4 sm:py-6 sticky top-0 z-30">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
-                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-bold text-white">
-                  Attendance Report
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-400">
-                  Monthly attendance analysis and reports
-                </p>
-              </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/25">
+              <BarChart3 className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900 dark:text-gray-100 tracking-tight">
+                Attendance Report
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-300">
+                Monthly attendance analysis and reports
+              </p>
             </div>
           </div>
           {attendanceData.length > 0 && (
             <Button
               onClick={handleExportToExcel}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
+              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg shadow-emerald-600/25"
             >
-              <Download className="h-4 w-4 mr-2" />
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
               Export to Excel
             </Button>
           )}
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Statistics Cards - Only show after search */}
+        {hasSearched && attendanceData.length > 0 && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-2xl font-bold text-slate-900 dark:text-gray-100">
+                  {totalStudents}
+                </div>
+                <div className="text-slate-600 dark:text-gray-300 text-sm">
+                  Total Students
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/40 dark:to-emerald-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <TrendingUp className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {averageAttendance}%
+                </div>
+                <div className="text-slate-600 dark:text-gray-300 text-sm">
+                  Average Attendance
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-violet-100 to-violet-200 dark:from-violet-900/40 dark:to-violet-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <Calendar className="h-6 w-6 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div className="text-2xl font-bold text-violet-600 dark:text-violet-400">
+                  {daysInMonth.length}
+                </div>
+                <div className="text-slate-600 dark:text-gray-300 text-sm">
+                  Days in Month
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
+              <CardContent className="p-4 text-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <BarChart3 className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                  {selectedStandard} - {selectedClass}
+                </div>
+                <div className="text-slate-600 dark:text-gray-300 text-sm">
+                  Selected Class
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Filters */}
-        <Card className="bg-slate-900/50 border-slate-800 mb-6">
+        <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Search className="h-5 w-5" />
+            <CardTitle className="text-slate-900 dark:text-gray-100 flex items-center gap-2">
+              <Search className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               Filter Options
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-slate-600 dark:text-gray-300">
               Select standard, class, month and year to generate attendance
               report
             </CardDescription>
@@ -249,22 +315,24 @@ export default function AttendanceReportClient() {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <div className="space-y-2">
-                <Label className="text-slate-200">Standard</Label>
+                <Label className="text-slate-700 dark:text-gray-300 font-medium">
+                  Standard
+                </Label>
                 <Select
                   value={selectedStandard}
                   onValueChange={(value) =>
                     setSelectedStandard(value as StandardKey)
                   }
                 >
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                  <SelectTrigger className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100">
                     <SelectValue placeholder="Select Standard" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-600/40">
                     {availableStandards.map((standard) => (
                       <SelectItem
                         key={standard}
                         value={standard}
-                        className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                        className="text-slate-900 dark:text-gray-100 hover:bg-slate-100 dark:hover:bg-gray-700/50 focus:bg-slate-100 dark:focus:bg-gray-700/50"
                       >
                         Standard {standard}
                       </SelectItem>
@@ -274,13 +342,15 @@ export default function AttendanceReportClient() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-200">Class</Label>
+                <Label className="text-slate-700 dark:text-gray-300 font-medium">
+                  Class
+                </Label>
                 <Select
                   value={selectedClass}
                   onValueChange={setSelectedClass}
                   disabled={!selectedStandard}
                 >
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                  <SelectTrigger className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100">
                     <SelectValue
                       placeholder={
                         selectedStandard
@@ -289,12 +359,12 @@ export default function AttendanceReportClient() {
                       }
                     />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-600/40">
                     {availableClasses.map((cls) => (
                       <SelectItem
                         key={cls}
                         value={cls}
-                        className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                        className="text-slate-900 dark:text-gray-100 hover:bg-slate-100 dark:hover:bg-gray-700/50 focus:bg-slate-100 dark:focus:bg-gray-700/50"
                       >
                         {cls}
                       </SelectItem>
@@ -304,22 +374,24 @@ export default function AttendanceReportClient() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-200">Month</Label>
+                <Label className="text-slate-700 dark:text-gray-300 font-medium">
+                  Month
+                </Label>
                 <Select
                   value={selectedMonth.toString()}
                   onValueChange={(value) =>
                     setSelectedMonth(Number.parseInt(value))
                   }
                 >
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                  <SelectTrigger className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-600/40">
                     {MONTHS.map((month) => (
                       <SelectItem
                         key={month.value}
                         value={month.value}
-                        className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                        className="text-slate-900 dark:text-gray-100 hover:bg-slate-100 dark:hover:bg-gray-700/50 focus:bg-slate-100 dark:focus:bg-gray-700/50"
                       >
                         {month.label}
                       </SelectItem>
@@ -329,22 +401,24 @@ export default function AttendanceReportClient() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-slate-200">Year</Label>
+                <Label className="text-slate-700 dark:text-gray-300 font-medium">
+                  Year
+                </Label>
                 <Select
                   value={selectedYear.toString()}
                   onValueChange={(value) =>
                     setSelectedYear(Number.parseInt(value))
                   }
                 >
-                  <SelectTrigger className="bg-slate-800/50 border-slate-700 text-white">
+                  <SelectTrigger className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent className="bg-white dark:bg-gray-800 border-slate-200 dark:border-gray-600/40">
                     {YEARS.map((year) => (
                       <SelectItem
                         key={year.value}
                         value={year.value}
-                        className="text-white hover:bg-slate-700 focus:bg-slate-700"
+                        className="text-slate-900 dark:text-gray-100 hover:bg-slate-100 dark:hover:bg-gray-700/50 focus:bg-slate-100 dark:focus:bg-gray-700/50"
                       >
                         {year.label}
                       </SelectItem>
@@ -357,7 +431,7 @@ export default function AttendanceReportClient() {
             <Button
               onClick={handleSearch}
               disabled={loading || !selectedStandard || !selectedClass}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+              className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-600/25"
             >
               {loading ? (
                 <>
@@ -373,13 +447,13 @@ export default function AttendanceReportClient() {
 
         {/* Loading State */}
         {loading && (
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardContent className="text-center py-12">
-              <Loader2 className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
-              <h3 className="text-white font-medium mb-2">
+              <Loader2 className="h-12 w-12 text-indigo-600 dark:text-indigo-400 mx-auto mb-4 animate-spin" />
+              <h3 className="text-slate-900 dark:text-gray-100 font-medium mb-2">
                 Generating Attendance Report
               </h3>
-              <p className="text-slate-400">
+              <p className="text-slate-600 dark:text-gray-300">
                 Please wait while we fetch attendance data for Standard{" "}
                 {selectedStandard} Class {selectedClass}...
               </p>
@@ -389,14 +463,14 @@ export default function AttendanceReportClient() {
 
         {/* Attendance Table */}
         {!loading && hasSearched && attendanceData.length > 0 && (
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
+              <CardTitle className="text-slate-900 dark:text-gray-100 flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
                 Attendance Report - Standard {selectedStandard} Class{" "}
                 {selectedClass}
               </CardTitle>
-              <CardDescription className="text-slate-400">
+              <CardDescription className="text-slate-600 dark:text-gray-300">
                 {
                   MONTHS.find((m) => m.value === selectedMonth.toString())
                     ?.label
@@ -411,39 +485,42 @@ export default function AttendanceReportClient() {
                 style={{ maxWidth: "100%" }}
               >
                 <table className="w-full text-xs border-collapse">
-                  <thead className="sticky top-0 bg-slate-900/95 backdrop-blur-sm z-20">
-                    <tr className="border-b border-slate-700">
-                      <th className="text-left py-2 px-2 text-slate-300 font-medium sticky left-0 bg-slate-900/95 backdrop-blur-sm z-30 min-w-[50px] border-r border-slate-700">
+                  <thead className="sticky top-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm z-20">
+                    <tr className="border-b border-slate-200 dark:border-gray-600/40">
+                      <th className="text-left py-2 px-2 text-slate-700 dark:text-gray-300 font-medium sticky left-0 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm z-30 min-w-[50px] border-r border-slate-200 dark:border-gray-600/40">
                         Roll
                       </th>
-                      <th className="text-center py-2 px-2 text-slate-300 font-medium sticky left-[50px] bg-slate-900/95 backdrop-blur-sm z-30 min-w-[180px] border-r border-slate-700">
+                      <th className="text-center py-2 px-2 text-slate-700 dark:text-gray-300 font-medium sticky left-[50px] bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm z-30 min-w-[180px] border-r border-slate-200 dark:border-gray-600/40">
                         Name
                       </th>
                       {daysInMonth.map((day) => (
                         <th
                           key={day}
-                          className={`text-center py-2 px-1 text-slate-300 font-medium min-w-[28px] text-xs ${
-                            isSunday(day) ? "bg-blue-500/10" : ""
+                          className={`text-center py-2 px-1 text-slate-700 dark:text-gray-300 font-medium min-w-[28px] text-xs ${
+                            isSunday(day)
+                              ? "bg-blue-100 dark:bg-blue-900/20"
+                              : ""
                           }`}
                         >
                           {day}
                         </th>
                       ))}
-                      
                     </tr>
                   </thead>
                   <tbody>
                     {attendanceData.map((student, index) => (
                       <tr
                         key={student.studentId}
-                        className={`border-b border-slate-700/30 hover:bg-slate-800/20 ${
-                          index % 2 === 0 ? "bg-slate-800/5" : ""
+                        className={`border-b border-slate-200 dark:border-gray-600/30 hover:bg-slate-50 dark:hover:bg-gray-700/20 transition-colors ${
+                          index % 2 === 0
+                            ? "bg-slate-25 dark:bg-gray-800/10"
+                            : ""
                         }`}
                       >
-                        <td className="py-1.5 px-2 text-white font-medium sticky left-0 bg-slate-900/90 backdrop-blur-sm z-20 border-r border-slate-700/50">
+                        <td className="py-1.5 px-2 text-slate-900 dark:text-gray-100 font-medium sticky left-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-20 border-r border-slate-200 dark:border-gray-600/40">
                           {student.rollNo}
                         </td>
-                        <td className="py-1.5 px-2 text-white sticky left-[50px] bg-slate-900/90 backdrop-blur-sm z-20 border-r border-slate-700/50">
+                        <td className="py-1.5 px-2 text-slate-900 dark:text-gray-100 sticky left-[50px] bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm z-20 border-r border-slate-200 dark:border-gray-600/40">
                           <div>
                             <div className="font-medium text-xs leading-tight">
                               {student.name}
@@ -458,18 +535,20 @@ export default function AttendanceReportClient() {
                             <td
                               key={day}
                               className={`py-1.5 px-0.5 text-center ${
-                                isHoliday ? "bg-blue-500/5" : ""
+                                isHoliday
+                                  ? "bg-blue-50 dark:bg-blue-900/10"
+                                  : ""
                               }`}
                             >
                               <span
                                 className={`inline-block w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center ${
                                   status === "P"
-                                    ? "bg-green-500/25 text-green-300 border border-green-500/40"
+                                    ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50"
                                     : status === "A"
-                                    ? "bg-red-500/25 text-red-300 border border-red-500/40"
+                                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700/50"
                                     : status === "H"
-                                    ? "bg-blue-500/25 text-blue-300 border border-blue-500/40"
-                                    : "bg-slate-700/40 text-slate-400 border border-slate-600/40"
+                                    ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700/50"
+                                    : "bg-slate-100 dark:bg-gray-700/40 text-slate-500 dark:text-gray-400 border border-slate-300 dark:border-gray-600/40"
                                 }`}
                               >
                                 {status}
@@ -484,31 +563,39 @@ export default function AttendanceReportClient() {
               </div>
 
               {/* Legend */}
-              <div className="p-4 border-t border-slate-700">
+              <div className="p-4 border-t border-slate-200 dark:border-gray-600/40">
                 <div className="flex flex-wrap gap-4 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 bg-green-500/25 text-green-300 border border-green-500/40 rounded flex items-center justify-center text-[10px] font-bold">
+                    <span className="w-4 h-4 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50 rounded flex items-center justify-center text-[10px] font-bold">
                       P
                     </span>
-                    <span className="text-slate-300">Present</span>
+                    <span className="text-slate-700 dark:text-gray-300">
+                      Present
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 bg-red-500/25 text-red-300 border border-red-500/40 rounded flex items-center justify-center text-[10px] font-bold">
+                    <span className="w-4 h-4 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-700/50 rounded flex items-center justify-center text-[10px] font-bold">
                       A
                     </span>
-                    <span className="text-slate-300">Absent</span>
+                    <span className="text-slate-700 dark:text-gray-300">
+                      Absent
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 bg-blue-500/25 text-blue-300 border border-blue-500/40 rounded flex items-center justify-center text-[10px] font-bold">
+                    <span className="w-4 h-4 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700/50 rounded flex items-center justify-center text-[10px] font-bold">
                       H
                     </span>
-                    <span className="text-slate-300">Holiday (Sundays)</span>
+                    <span className="text-slate-700 dark:text-gray-300">
+                      Holiday (Sundays)
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 bg-slate-700/40 text-slate-400 border border-slate-600/40 rounded flex items-center justify-center text-[10px] font-bold">
+                    <span className="w-4 h-4 bg-slate-100 dark:bg-gray-700/40 text-slate-500 dark:text-gray-400 border border-slate-300 dark:border-gray-600/40 rounded flex items-center justify-center text-[10px] font-bold">
                       -
                     </span>
-                    <span className="text-slate-300">No Data</span>
+                    <span className="text-slate-700 dark:text-gray-300">
+                      No Data
+                    </span>
                   </div>
                 </div>
               </div>
@@ -518,13 +605,15 @@ export default function AttendanceReportClient() {
 
         {/* Empty State - Only show after search */}
         {!loading && hasSearched && attendanceData.length === 0 && (
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardContent className="text-center py-12">
-              <Calendar className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-              <h3 className="text-white font-medium mb-2">
+              <div className="w-16 h-16 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-700/40 dark:to-gray-600/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-slate-500 dark:text-gray-400" />
+              </div>
+              <h3 className="text-slate-900 dark:text-gray-100 font-medium mb-2">
                 No Attendance Data Found
               </h3>
-              <p className="text-slate-400">
+              <p className="text-slate-600 dark:text-gray-300">
                 No attendance records found for Standard {selectedStandard}{" "}
                 Class {selectedClass} in{" "}
                 {
@@ -539,13 +628,15 @@ export default function AttendanceReportClient() {
 
         {/* Initial State - Before any search */}
         {!loading && !hasSearched && (
-          <Card className="bg-slate-900/50 border-slate-800">
+          <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardContent className="text-center py-12">
-              <Search className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-              <h3 className="text-white font-medium mb-2">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/40 dark:to-indigo-800/40 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Search className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <h3 className="text-slate-900 dark:text-gray-100 font-medium mb-2">
                 Ready to Generate Report
               </h3>
-              <p className="text-slate-400">
+              <p className="text-slate-600 dark:text-gray-300">
                 Select standard, class, month and year above, then click
                 "Generate Report" to view attendance data.
               </p>

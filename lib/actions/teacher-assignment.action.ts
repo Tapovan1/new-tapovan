@@ -40,9 +40,9 @@ export async function getGroupedAssignments() {
 
   const teachers = await prisma.teacher.findMany({
     where: {
-      NOT:{
-        role:"ADMIN"
-      }
+      NOT: {
+        role: "ADMIN",
+      },
     },
     include: {
       assignments: {
@@ -76,11 +76,10 @@ export async function getGroupedAssignments() {
 
 export async function createAssignment(data: {
   teacherId: string;
-  standardNo: number;
+  standardNo: string;
   standardName: string;
   className: string;
   subject: string;
-  isClassTeacher?: boolean;
 }) {
   const user = await getUser();
   if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
@@ -105,7 +104,13 @@ export async function createAssignment(data: {
       // Update existing assignment
       const updated = await prisma.teacherAssignment.update({
         where: { id: existing.id },
-        data: { isClassTeacher: data.isClassTeacher || false },
+        data: {
+          teacherId: data.teacherId,
+          standardNo: data.standardNo,
+          standardName: data.standardName,
+          className: data.className,
+          subject: data.subject,
+        },
       });
       console.log("Updated assignment:", updated);
     } else {
@@ -118,7 +123,6 @@ export async function createAssignment(data: {
           standardName: data.standardName,
           className: data.className,
           subject: data.subject,
-          isClassTeacher: data.isClassTeacher || false,
         },
       });
       console.log("Created assignment:", created);
@@ -138,7 +142,6 @@ export async function bulkAssignTeacher(data: {
     standardName: string;
     className: string;
     subject: string;
-    isClassTeacher?: boolean;
   }>;
 }) {
   const user = await getUser();

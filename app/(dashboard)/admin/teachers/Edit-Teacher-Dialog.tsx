@@ -19,14 +19,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Edit, Loader2 } from "lucide-react";
+import { Edit, Loader2, UserCog } from "lucide-react";
 import { updateTeacher } from "@/lib/actions/teacher.action";
 import { useRouter } from "next/navigation";
 
 const TEACHER_ROLES = [
-  { value: "ADMIN", label: "Admin" },
-  { value: "TEACHER", label: "Teacher" },
-  { value: "ATEACHER", label: "Attendance" },
+  { value: "ADMIN", label: "Admin", description: "Full system access" },
+  { value: "TEACHER", label: "Teacher", description: "Teaching and grading" },
+  {
+    value: "ATEACHER",
+    label: "Attendance",
+    description: "Attendance management",
+  },
 ];
 
 interface Teacher {
@@ -73,67 +77,83 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
         <Button
           size="sm"
           variant="ghost"
-          className="text-green-400 hover:bg-green-500/20"
+          className="text-green-500 hover:text-green-600 hover:bg-green-500/10 transition-colors"
         >
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-white">Edit Teacher</DialogTitle>
-          <DialogDescription className="text-slate-400">
-            Update teacher account details
-          </DialogDescription>
+      <DialogContent className="bg-card border-border max-w-md backdrop-blur-sm">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center">
+              <UserCog className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <DialogTitle className="text-foreground text-xl">
+                Edit Teacher
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground">
+                Update {teacher.name}'s account details and permissions
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <form action={action} className="space-y-4">
+        <form action={action} className="space-y-5 mt-6">
           <input type="hidden" name="id" value={teacher.id} />
           <div className="space-y-2">
-            <Label className="text-slate-200">Full Name</Label>
+            <Label className="text-foreground font-medium">Full Name</Label>
             <Input
               name="name"
               defaultValue={teacher.name}
               required
-              className="bg-slate-700/50 border-slate-600 text-white"
+              className="bg-background/50 border-border/50 text-foreground focus:border-primary/50 transition-colors"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-200">Email</Label>
+            <Label className="text-foreground font-medium">Email Address</Label>
             <Input
               name="email"
               type="email"
               defaultValue={teacher.email}
               required
-              className="bg-slate-700/50 border-slate-600 text-white"
+              className="bg-background/50 border-border/50 text-foreground focus:border-primary/50 transition-colors"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-200">Username</Label>
+            <Label className="text-foreground font-medium">Username</Label>
             <Input
               name="username"
               defaultValue={teacher.username}
               required
-              className="bg-slate-700/50 border-slate-600 text-white"
+              className="bg-background/50 border-border/50 text-foreground focus:border-primary/50 transition-colors"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-200">Role</Label>
+            <Label className="text-foreground font-medium">
+              Role & Permissions
+            </Label>
             <Select
               name="role"
               value={selectedRole}
               onValueChange={setSelectedRole}
               required
             >
-              <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+              <SelectTrigger className="bg-background/50 border-border/50 text-foreground focus:border-primary/50 transition-colors">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-700 border-slate-600">
+              <SelectContent className="bg-card border-border">
                 {TEACHER_ROLES.map((role) => (
                   <SelectItem
                     key={role.value}
                     value={role.value}
-                    className="text-white hover:bg-slate-600 focus:bg-slate-600"
+                    className="text-foreground hover:bg-muted focus:bg-muted"
                   >
-                    {role.label}
+                    <div className="flex flex-col">
+                      <span className="font-medium">{role.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {role.description}
+                      </span>
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -142,28 +162,46 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
             <input type="hidden" name="role" value={selectedRole} />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-200">Password</Label>
+            <Label className="text-foreground font-medium">New Password</Label>
             <Input
               name="password"
               type="password"
               defaultValue={teacher.password || ""}
-              className="bg-slate-700/50 border-slate-600 text-white"
+              className="bg-background/50 border-border/50 text-foreground focus:border-primary/50 transition-colors"
               placeholder="Leave blank to keep current password"
             />
+            <p className="text-xs text-muted-foreground">
+              Only enter a new password if you want to change it
+            </p>
           </div>
-          <div className="flex justify-end gap-2 mt-6">
+
+          {state?.error && (
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <p className="text-destructive text-sm">{state.error}</p>
+            </div>
+          )}
+
+          {state?.success && (
+            <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+              <p className="text-green-600 dark:text-green-400 text-sm">
+                {state.message}
+              </p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
-              className="border-slate-600 text-black"
+              className="border-border/50"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isPending}
-              className="bg-gradient-to-r from-green-500 to-emerald-500"
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 shadow-lg"
             >
               {isPending ? (
                 <>
@@ -171,15 +209,14 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
                   Updating...
                 </>
               ) : (
-                "Update Teacher"
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Update Teacher
+                </>
               )}
             </Button>
           </div>
         </form>
-
-        {state?.success && (
-          <p className="text-green-400 text-sm mt-2">{state.message}</p>
-        )}
       </DialogContent>
     </Dialog>
   );
