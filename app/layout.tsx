@@ -11,7 +11,6 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "EduTrack Pro - Student Management System",
   description: "Complete student management system for schools",
-  generator: "v0.dev",
 };
 
 export default function RootLayout({
