@@ -94,7 +94,7 @@ export default function TeacherAssignments({
   const allSubjects = getAllSubjects();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+    <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -235,17 +235,12 @@ export default function TeacherAssignments({
                     <TableHead className="text-muted-foreground font-semibold">
                       Teacher
                     </TableHead>
-                    <TableHead className="text-muted-foreground font-semibold">
-                      Total Assignments
-                    </TableHead>
+
                     <TableHead className="text-muted-foreground font-semibold">
                       Class Teacher Of
                     </TableHead>
                     <TableHead className="text-muted-foreground font-semibold">
                       All Assignments
-                    </TableHead>
-                    <TableHead className="text-muted-foreground font-semibold">
-                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -318,14 +313,7 @@ export default function TeacherAssignments({
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-foreground">
-                          <Badge
-                            variant="outline"
-                            className="border-primary/30 text-primary bg-primary/5"
-                          >
-                            {teacher.totalAssignments} assignments
-                          </Badge>
-                        </TableCell>
+
                         <TableCell className="text-foreground">
                           <div className="space-y-1">
                             {teacher.assignments.length === 0 ? (
@@ -398,17 +386,6 @@ export default function TeacherAssignments({
                                 </div>
                               </div>
                             ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant="outline"
-                              className="border-border/50 text-muted-foreground"
-                            >
-                              <BookOpen className="h-3 w-3 mr-1" />
-                              {teacher.assignments.length}
-                            </Badge>
                           </div>
                         </TableCell>
                       </TableRow>

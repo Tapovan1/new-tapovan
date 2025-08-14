@@ -12,10 +12,6 @@ export default async function MyTests() {
     redirect("/");
   }
 
-  if (user.role === "ADMIN") {
-    redirect("/admin/dashboard");
-  }
-
   const tests = await getTeacherTests(user.id);
 
   return <TestsClient tests={tests} teacher={user} />;

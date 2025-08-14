@@ -3,7 +3,6 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getUser } from "./getUser";
-import test from "node:test";
 
 export async function getTeacherTests(teacherId?: string) {
   const user = await getUser();
@@ -11,11 +10,6 @@ export async function getTeacherTests(teacherId?: string) {
 
   // Use provided teacherId or current user's ID
   const targetTeacherId = teacherId || user.id;
-
-  // Teachers can only see their own tests unless they're admin
-  if (user.role === "TEACHER" && user.id !== targetTeacherId) {
-    throw new Error("Unauthorized");
-  }
 
   try {
     const tests = await prisma.test.findMany({
@@ -34,6 +28,7 @@ export async function getTeacherTests(teacherId?: string) {
       },
       orderBy: { date: "desc" },
     });
+    // console.log("Fetched teacher tests:", tests);
 
     // Transform the data to match the expected format
     return tests.map((test) => ({
@@ -99,6 +94,8 @@ export async function updateTest(
     status?: string;
   }
 ) {
+  console.log("Updating test:", testId, data);
+
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
@@ -114,14 +111,13 @@ export async function updateTest(
     }
 
     const test = await prisma.test.update({
-      where: { id: testId },
-      data,
-      include: {
-        _count: {
-          select: {
-            marks: true,
-          },
-        },
+      where: {
+        id: testId,
+      },
+      data: {
+        name: data.name,
+        ...(data.date !== undefined && { date: new Date(data.date) }),
+        maxMarks: data.maxMarks,
       },
     });
 
@@ -185,11 +181,10 @@ export async function getTestById(testId: string) {
             },
           },
         },
-       
+
         _count: {
           select: {
             marks: true,
-       
           },
         },
       },
@@ -232,7 +227,6 @@ export async function getTestsByExamType(examType: string, teacherId?: string) {
         _count: {
           select: {
             marks: true,
-           
           },
         },
       },

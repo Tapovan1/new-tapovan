@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -17,6 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Search,
   BookOpen,
@@ -28,9 +37,11 @@ import {
   Loader2,
   Calendar,
   Hash,
+  Edit,
+  Save,
 } from "lucide-react";
 import Link from "next/link";
-import { deleteTest } from "@/lib/actions/test.action";
+import { deleteTest, updateTest } from "@/lib/actions/test.action";
 import { generateMarkSheetPdf } from "@/utils/pdf-generator";
 import { getMarksForTest } from "@/lib/actions/marks.action";
 import { toast } from "sonner";
@@ -79,6 +90,16 @@ export default function TestsClient({
     null
   );
 
+  const [editingTest, setEditingTest] = useState<Test | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    date: new Date(),
+    maxMarks: "",
+    chapter: "",
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const getStatusColor = (test: Test) => {
     if (test.status === "PENDING") {
       return "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-200 dark:border-red-800/50";
@@ -114,6 +135,63 @@ export default function TestsClient({
       subjectFilter === "all" || test.subject === subjectFilter;
     return matchesSearch && matchesStatus && matchesSubject;
   });
+
+  const handleEditTest = (test: Test) => {
+    setEditingTest(test);
+    setEditFormData({
+      name: test.name,
+      date: test.date, // Format date as YYYY-MM-DD
+      maxMarks: test.maxMarks.toString(),
+      chapter: test.chapter || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateTest = async () => {
+    if (!editingTest) return;
+
+    if (!editFormData.name || !editFormData.date || !editFormData.maxMarks) {
+      toast("Please fill all required fields");
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const result = await updateTest(editingTest.id, {
+        name: editFormData.name,
+        date: editFormData.date,
+        maxMarks: Number.parseInt(editFormData.maxMarks),
+        chapter: editFormData.chapter || undefined,
+      });
+
+      if (result.success) {
+        // Update the test in the local state
+        setTests(
+          tests.map((test) =>
+            test.id === editingTest.id
+              ? {
+                  ...test,
+                  name: editFormData.name,
+                  date: editFormData.date,
+                  maxMarks: Number.parseInt(editFormData.maxMarks),
+                  chapter: editFormData.chapter || undefined,
+                }
+              : test
+          )
+        );
+        setEditDialogOpen(false);
+        setEditingTest(null);
+        toast("Test updated successfully!");
+      } else {
+        toast(result.error || "Failed to update test");
+      }
+    } catch (error) {
+      console.error("Error updating test:", error);
+      toast("Failed to update test");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   const handleDeleteTest = async (testId: string) => {
     if (
@@ -384,6 +462,15 @@ export default function TestsClient({
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-1 justify-end">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleEditTest(test)}
+                                  className="h-7 w-7 p-0 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                                  title="Edit Test Details"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
                                 <Link href={`/marks?test=${test.id}`}>
                                   <Button
                                     size="sm"
@@ -514,6 +601,15 @@ export default function TestsClient({
 
                           {/* Action Buttons */}
                           <div className="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-gray-600/30">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEditTest(test)}
+                              className="h-7 px-2 text-xs text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
                             <Link
                               href={`/marks?test=${test.id}`}
                               className="flex-1"
@@ -524,7 +620,7 @@ export default function TestsClient({
                                 className="w-full h-7 text-xs text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 bg-transparent"
                               >
                                 <BookOpen className="h-3 w-3 mr-1" />
-                                Edit Marks
+                                Marks
                               </Button>
                             </Link>
                             {test.status === "COMPLETED" && (
@@ -561,6 +657,137 @@ export default function TestsClient({
           </Card>
         </div>
       </div>
+
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-600/40">
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 dark:text-gray-100 flex items-center gap-2">
+              <Edit className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              Edit Test Details
+            </DialogTitle>
+            <DialogDescription className="text-slate-600 dark:text-gray-300">
+              Update the test information. Changes will be saved immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-name"
+                className="text-slate-700 dark:text-gray-300 font-medium"
+              >
+                Test Name
+              </Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder="Enter test name"
+                className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-date"
+                className="text-slate-700 dark:text-gray-300 font-medium"
+              >
+                Test Date
+              </Label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="edit-date"
+                  value={editFormData.date}
+                  onChange={(e) =>
+                    setEditFormData((prev) => ({
+                      ...prev,
+                      date: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-gray-700/60 border border-slate-200 dark:border-gray-600/40 rounded-md text-slate-900 dark:text-gray-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/25"
+                />
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-maxMarks"
+                className="text-slate-700 dark:text-gray-300 font-medium"
+              >
+                Maximum Marks
+              </Label>
+              <Input
+                id="edit-maxMarks"
+                type="number"
+                value={editFormData.maxMarks}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    maxMarks: e.target.value,
+                  }))
+                }
+                placeholder="Enter maximum marks"
+                className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100"
+                min="1"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="edit-chapter"
+                className="text-slate-700 dark:text-gray-300 font-medium"
+              >
+                Chapter (Optional)
+              </Label>
+              <Input
+                id="edit-chapter"
+                value={editFormData.chapter}
+                onChange={(e) =>
+                  setEditFormData((prev) => ({
+                    ...prev,
+                    chapter: e.target.value,
+                  }))
+                }
+                placeholder="Enter chapter name"
+                className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditDialogOpen(false)}
+              className="border-slate-200 dark:border-gray-600/40 text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-gray-700/30"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleUpdateTest}
+              disabled={isUpdating}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-600/25"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Test
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
