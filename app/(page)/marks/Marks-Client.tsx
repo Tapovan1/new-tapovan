@@ -42,6 +42,34 @@ import {
 import { getTeacherAssignedData } from "@/lib/actions/teacher-assignment.action";
 import { useRouter, useSearchParams } from "next/navigation";
 
+interface TestData {
+  id: string;
+  name: string;
+  subject: string;
+  standard: string;
+  class: string;
+  date: string | Date;
+  maxMarks: number;
+  examType: string;
+  students: {
+    id: string;
+    name: string;
+    standard: string;
+    class: string;
+    status: any;
+    createdAt: Date;
+    updatedAt: Date;
+    grNo: string;
+    enrollmentNo: string;
+    rollNo: number;
+  }[];
+  marks?: { studentId: string; marks: number }[];
+  chapter?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  _count?: { marks: number };
+}
+
 interface MarksClientProps {
   teacher: any;
   initialTests: any[];
@@ -122,9 +150,15 @@ export default function MarksClient({
         setSelectedClass(testData.class || "");
         setSelectedSubject(testData.subject || "");
         setNewTestName(testData.name || "");
-        setTestDate(testData.date || "");
+        setTestDate(
+          testData.date
+            ? typeof testData.date === "string"
+              ? testData.date
+              : new Date(testData.date).toISOString().split("T")[0]
+            : ""
+        );
         setMaxMarks(testData.maxMarks?.toString() || "");
-        setChapterName(testData.chapter || "");
+        setChapterName((testData as any).chapter || "");
 
         // Set current test and students
         setCurrentTest(testData);

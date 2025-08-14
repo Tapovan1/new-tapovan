@@ -58,18 +58,12 @@ export async function getGroupedAssignments() {
 
   // Group assignments by teacher
   return teachers.map((teacher) => {
-    const classTeacherAssignments = teacher.assignments.filter(
-      (a) => a.isClassTeacher
-    );
-
     return {
       id: teacher.id,
       name: teacher.name,
       email: teacher.email,
       totalAssignments: teacher.assignments.length,
       assignments: teacher.assignments,
-      classTeacherAssignments: classTeacherAssignments,
-      hasClassTeacherRole: classTeacherAssignments.length > 0,
     };
   });
 }
@@ -136,53 +130,53 @@ export async function createAssignment(data: {
   }
 }
 
-export async function bulkAssignTeacher(data: {
-  teacherId: string;
-  assignments: Array<{
-    standardName: string;
-    className: string;
-    subject: string;
-  }>;
-}) {
-  const user = await getUser();
-  if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+// export async function bulkAssignTeacher(data: {
+//   teacherId: string;
+//   assignments: Array<{
+//     standardName: string;
+//     className: string;
+//     subject: string;
+//   }>;
+// }) {
+//   const user = await getUser();
+//   if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
 
-  try {
-    console.log("Bulk assigning teacher:", data);
+//   try {
+//     console.log("Bulk assigning teacher:", data);
 
-    // Create all assignments in a transaction
-    const results = await prisma.$transaction(
-      data.assignments.map((assignment) =>
-        prisma.teacherAssignment.upsert({
-          where: {
-            teacherId_standardNo_className_subject: {
-              teacherId: data.teacherId,
+//     // Create all assignments in a transaction
+//     const results = await prisma.$transaction(
+//       data.assignments.map((assignment) =>
+//         prisma.teacherAssignment.upsert({
+//           where: {
+//             teacherId_standardNo_className_subject: {
+//               teacherId: data.teacherId,
 
-              className: assignment.className,
-              subject: assignment.subject,
-            },
-          },
-          update: {},
-          create: {
-            teacherId: data.teacherId,
-            standardNo: assignment.standardNo,
-            standardName: assignment.standardName,
-            className: assignment.className,
-            subject: assignment.subject,
-          },
-        })
-      )
-    );
+//               className: assignment.className,
+//               subject: assignment.subject,
+//             },
+//           },
+//           update: {},
+//           create: {
+//             teacherId: data.teacherId,
+//             standardNo: assignment.standardNo,
+//             standardName: assignment.standardName,
+//             className: assignment.className,
+//             subject: assignment.subject,
+//           },
+//         })
+//       )
+//     );
 
-    console.log("Bulk assignment results:", results);
+//     console.log("Bulk assignment results:", results);
 
-    revalidatePath("/admin/teacher-assignments");
-    return { success: true };
-  } catch (error) {
-    console.error("Error bulk assigning teacher:", error);
-    return { error: "Failed to bulk assign teacher" };
-  }
-}
+//     revalidatePath("/admin/teacher-assignments");
+//     return { success: true };
+//   } catch (error) {
+//     console.error("Error bulk assigning teacher:", error);
+//     return { error: "Failed to bulk assign teacher" };
+//   }
+// }
 
 export async function deleteAssignment(assignmentId: string) {
   const user = await getUser();
@@ -205,12 +199,7 @@ export async function deleteAssignment(assignmentId: string) {
   }
 }
 
-export async function updateAssignment(
-  assignmentId: string,
-  data: {
-    isClassTeacher?: boolean;
-  }
-) {
+export async function updateAssignment(assignmentId: string, data: any) {
   const user = await getUser();
   if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
 
@@ -221,8 +210,6 @@ export async function updateAssignment(
       where: { id: assignmentId },
       data,
     });
-
-    console.log("Updated assignment:", updated);
 
     revalidatePath("/admin/teacher-assignments");
     return { success: true };
@@ -246,12 +233,23 @@ export async function getTeacherAssignedData(teacherId: string) {
     orderBy: [{ standardNo: "asc" }, { className: "asc" }, { subject: "asc" }],
   });
 
-  // Group by standard for easier access
-  const standardsMap = new Map();
+  // Group by standard
+  const standardsMap = new Map<
+    string,
+    {
+      standard: {
+        id: string;
+        name: string;
+        displayName: string;
+        level: number;
+      };
+      classes: Set<string>;
+      subjects: Set<string>;
+    }
+  >();
 
   assignments.forEach((assignment) => {
     if (!standardsMap.has(assignment.standardNo)) {
-      // Create standard data object directly
       const standardData = {
         id: assignment.standardName,
         name: assignment.standardName,
@@ -269,28 +267,24 @@ export async function getTeacherAssignedData(teacherId: string) {
 
       standardsMap.set(assignment.standardNo, {
         standard: standardData,
-        classes: new Set(),
-        subjects: new Set(),
+        classes: new Set<string>(),
+        subjects: new Set<string>(),
       });
     }
 
     const standardGroup = standardsMap.get(assignment.standardNo);
     if (standardGroup) {
-      standardGroup.classes.add({
-        name: assignment.className,
-      });
-      standardGroup.subjects.add({
-        name: assignment.subject,
-      });
+      standardGroup.classes.add(assignment.className);
+      standardGroup.subjects.add(assignment.subject);
     }
   });
 
-  // Convert sets to arrays
+  // Convert sets to arrays with objects
   return Array.from(standardsMap.values())
     .map((group) => ({
       standard: group.standard,
-      classes: Array.from(group.classes),
-      subjects: Array.from(group.subjects),
+      classes: Array.from(group.classes).map((name) => ({ name })),
+      subjects: Array.from(group.subjects).map((name) => ({ name })),
     }))
     .sort((a, b) => a.standard.level - b.standard.level);
 }

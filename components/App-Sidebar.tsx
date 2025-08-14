@@ -84,16 +84,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       href: "/admin/excel",
       icon: FileText,
     },
-    {
-      name: "Marks Entry",
-      href: "/admin/marks",
-      icon: BookOpen,
-    },
-    {
-      name: "Holiday Management",
-      href: "/admin/holiday",
-      icon: Calendar,
-    },
+
     {
       name: "Holiday",
       href: "/admin/Holiday",
@@ -269,21 +260,6 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         </div>
 
         {/* User Info */}
-        <div className="p-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-xl flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                {user.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {user.email}
-              </p>
-            </div>
-          </div>
-        </div>
       </SidebarHeader>
 
       {/* Navigation */}

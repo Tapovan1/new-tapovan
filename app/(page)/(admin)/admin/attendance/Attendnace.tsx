@@ -32,6 +32,8 @@ import {
   getClassesForStandard,
   type StandardKey,
 } from "@/lib/constants/index";
+import { exportAttendanceToExcel } from "@/lib/excel/attendance";
+import { toast } from "sonner";
 
 interface AttendanceRecord {
   studentId: string;
@@ -74,6 +76,7 @@ export default function AttendanceReportClient() {
   const [attendanceData, setAttendanceData] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [daysInMonth, setDaysInMonth] = useState<number[]>([]);
 
   // Get available standards and classes
@@ -99,9 +102,20 @@ export default function AttendanceReportClient() {
     return date.getDay() === 0; // 0 = Sunday
   };
 
+  // Function to check if a date is a holiday (Sunday OR database holiday)
+  const isHoliday = (day: number, attendanceData: AttendanceRecord[]) => {
+    // Check if it's Sunday
+    if (isSunday(day)) return true;
+
+    // Check if any student has 'H' for this day (indicating a database holiday)
+    return attendanceData.some(
+      (student) => student.attendanceData[day.toString()] === "H"
+    );
+  };
+
   const handleSearch = async () => {
     if (!selectedStandard || !selectedClass) {
-      alert("Please select both standard and class");
+      toast.error("Please select both standard and class");
       return;
     }
 
@@ -116,23 +130,30 @@ export default function AttendanceReportClient() {
         selectedYear.toString()
       );
 
-      // Process data to add Sunday holidays
+      // Process data - DON'T override existing holiday data, just add Sundays
       const processedData = data.map((student) => {
         const updatedAttendanceData = { ...student.attendanceData };
         let totalPresent = 0;
         let totalDays = 0;
 
-        // Mark Sundays as holidays and recalculate stats
+        // Only mark Sundays as holidays if they don't already have data
         daysInMonth.forEach((day) => {
-          if (isSunday(day)) {
+          const currentStatus = updatedAttendanceData[day.toString()];
+
+          // If it's a holiday and no data exists, mark as holiday
+          if (
+            isHoliday(day, attendanceData) &&
+            (!currentStatus || currentStatus === "-")
+          ) {
             updatedAttendanceData[day.toString()] = "H";
           }
 
-          const status = updatedAttendanceData[day.toString()];
-          if (status === "P") {
+          // Recalculate stats based on final status
+          const finalStatus = updatedAttendanceData[day.toString()];
+          if (finalStatus === "P") {
             totalPresent++;
             totalDays++;
-          } else if (status === "A") {
+          } else if (finalStatus === "A") {
             totalDays++;
           }
           // H (Holiday) doesn't count towards total days
@@ -151,17 +172,60 @@ export default function AttendanceReportClient() {
       });
 
       setAttendanceData(processedData);
+      toast.success(
+        `Successfully loaded attendance data for ${processedData.length} students`
+      );
     } catch (error) {
       console.error("Error fetching attendance report:", error);
-      alert("Failed to fetch attendance report");
+      toast.error("Failed to fetch attendance report");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleExportToExcel = () => {
-    // TODO: Implement Excel export logic
-    alert("Excel export functionality will be implemented later");
+  const handleExportToExcel = async () => {
+    if (attendanceData.length === 0) {
+      toast.error("No data available for export");
+      return;
+    }
+
+    setExporting(true);
+
+    try {
+      const buffer = await exportAttendanceToExcel(
+        attendanceData,
+        selectedStandard,
+        selectedClass,
+        selectedMonth,
+        selectedYear
+      );
+
+      // Create blob and download
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      const monthName = MONTHS.find(
+        (m) => m.value === selectedMonth.toString()
+      )?.label;
+      link.download = `Attendance_Report_Std${selectedStandard}_${selectedClass}_${monthName}_${selectedYear}.xlsx`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Attendance report has been exported to Excel");
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast.error("Failed to export attendance report");
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Calculate overall statistics
@@ -226,15 +290,6 @@ export default function AttendanceReportClient() {
               </p>
             </div>
           </div>
-          {attendanceData.length > 0 && (
-            <Button
-              onClick={handleExportToExcel}
-              className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg shadow-emerald-600/25"
-            >
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Export to Excel
-            </Button>
-          )}
         </div>
       </div>
 
@@ -427,21 +482,41 @@ export default function AttendanceReportClient() {
                 </Select>
               </div>
             </div>
-
-            <Button
-              onClick={handleSearch}
-              disabled={loading || !selectedStandard || !selectedClass}
-              className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-600/25"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating Report...
-                </>
-              ) : (
-                "Generate Report"
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={handleSearch}
+                disabled={loading || !selectedStandard || !selectedClass}
+                className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-lg shadow-indigo-600/25"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating Report...
+                  </>
+                ) : (
+                  "Generate Report"
+                )}
+              </Button>
+              {attendanceData.length > 0 && (
+                <Button
+                  onClick={handleExportToExcel}
+                  disabled={exporting}
+                  className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg shadow-emerald-600/25"
+                >
+                  {exporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="h-4 w-4 mr-2" />
+                      Export to Excel
+                    </>
+                  )}
+                </Button>
               )}
-            </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -497,7 +572,7 @@ export default function AttendanceReportClient() {
                         <th
                           key={day}
                           className={`text-center py-2 px-1 text-slate-700 dark:text-gray-300 font-medium min-w-[28px] text-xs ${
-                            isSunday(day)
+                            isHoliday(day, attendanceData)
                               ? "bg-blue-100 dark:bg-blue-900/20"
                               : ""
                           }`}
@@ -530,18 +605,18 @@ export default function AttendanceReportClient() {
                         {daysInMonth.map((day) => {
                           const status =
                             student.attendanceData[day.toString()] || "-";
-                          const isHoliday = isSunday(day);
+                          const isHolidayDay = isHoliday(day, attendanceData);
                           return (
                             <td
                               key={day}
-                              className={`py-1.5 px-0.5 text-center ${
-                                isHoliday
+                              className={`py-1.5 px-1  text-center ${
+                                isHolidayDay
                                   ? "bg-blue-50 dark:bg-blue-900/10"
                                   : ""
                               }`}
                             >
                               <span
-                                className={`inline-block w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center ${
+                                className={` w-5 h-5 rounded text-[10px] font-bold flex items-center justify-center ${
                                   status === "P"
                                     ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50"
                                     : status === "A"
@@ -586,7 +661,7 @@ export default function AttendanceReportClient() {
                       H
                     </span>
                     <span className="text-slate-700 dark:text-gray-300">
-                      Holiday (Sundays)
+                      Holiday (Sundays & Public Holidays)
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

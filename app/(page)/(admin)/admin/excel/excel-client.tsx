@@ -27,21 +27,11 @@ import {
   Users,
   CheckCircle,
   Trash2,
-  RefreshCw,
   Filter,
-  MoreHorizontal,
   Calendar,
-  FileText,
   Loader2,
   ClipboardList,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,18 +50,18 @@ import {
   type StandardKey,
 } from "@/lib/constants/index";
 import { getTestByStdClassSubject } from "@/lib/actions/test.action";
+import { getSelectedTestsDataForExcel } from "@/lib/actions/export-test";
+import { exportTestDataToExcel } from "@/lib/excel/excel-test";
 
 // Test data interface based on your action file
 interface TestEntry {
   id: string;
   testName: string;
   testType: string;
-
+  subject: string;
   date: string;
   status: "Active" | "Completed" | "Scheduled" | "Cancelled";
 }
-
-// Subject options
 
 export default function ExcelManagementClient() {
   const [selectedStandard, setSelectedStandard] = useState<StandardKey | "">(
@@ -84,6 +74,7 @@ export default function ExcelManagementClient() {
     new Set()
   );
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -134,7 +125,7 @@ export default function ExcelManagementClient() {
         id: test.id,
         testName: test.name,
         testType: test.examType || "Regular",
-
+        subject: test.subject,
         date: test.date,
         status: test.status || "Active",
       }));
@@ -210,66 +201,86 @@ export default function ExcelManagementClient() {
   }, [entries, selectedEntries]);
 
   // Export to Excel
-  const handleExportToExcel = useCallback(() => {
-    if (entries.length === 0) {
+  const handleExportToExcel = async () => {
+    if (selectedEntries.size === 0) {
       toast({
-        title: "No Data",
-        description: "Generate report data first to export",
+        title: "No Tests Selected",
+        description: "Please select tests to export",
         variant: "destructive",
       });
       return;
     }
 
-    // Create CSV content
-    const headers = [
-      "Test Name",
-      "Test Type",
-      "Subject",
-      "Standard",
-      "Class",
-      "Date",
-      "Status",
-      "Total Marks",
-      "Duration (min)",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...entries.map((entry) =>
-        [
-          `"${entry.testName}"`,
-          `"${entry.testType}"`,
-          `"${entry.subject}"`,
-          `"${entry.standard}"`,
-          `"${entry.class}"`,
-          `"${entry.date}"`,
-          `"${entry.status}"`,
-          entry.totalMarks,
-          entry.duration,
-        ].join(",")
-      ),
-    ].join("\n");
+    if (!selectedStandard || !selectedClass) {
+      toast({
+        title: "Missing Information",
+        description: "Standard and class information is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Create and download file
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `test_report_${selectedStandard}_${selectedClass}_${
+    setExporting(true);
+
+    try {
+      // Get selected test IDs
+      const testIds = Array.from(selectedEntries);
+
+      // Fetch test data with student marks
+      const testData = await getSelectedTestsDataForExcel(
+        selectedStandard,
+        selectedClass,
+        testIds
+      );
+
+      if (!testData || testData.students.length === 0) {
+        toast({
+          title: "No Data Found",
+          description: "No student data found for the selected tests",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generate Excel file
+      const buffer = await exportTestDataToExcel(
+        testData,
+        selectedStandard,
+        selectedClass
+      );
+
+      // Create blob and download
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Test_Marks_Report_Std${selectedStandard}_${selectedClass}_${
         new Date().toISOString().split("T")[0]
-      }.csv`
-    );
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      }.xlsx`;
 
-    toast({
-      title: "Export Complete",
-      description: `Exported ${entries.length} test entries to CSV`,
-    });
-  }, [entries, selectedStandard, selectedClass]);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: `Excel report exported with ${testData.students.length} students and ${testIds.length} tests`,
+      });
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export Excel report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // Get test type badge color
   const getTestTypeBadgeColor = (testType: string) => {
@@ -295,8 +306,6 @@ export default function ExcelManagementClient() {
       "bg-gray-500/10 text-gray-600 border-gray-500/20 dark:bg-gray-500/20 dark:text-gray-400"
     );
   };
-
-  // Get subject badge color
 
   // Get status badge color
   const getStatusBadgeColor = (status: string) => {
@@ -329,7 +338,8 @@ export default function ExcelManagementClient() {
                   Excel Management
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Advanced test data management and Excel export system
+                  Advanced test data management and Excel export with student
+                  marks
                 </p>
               </div>
             </div>
@@ -346,13 +356,23 @@ export default function ExcelManagementClient() {
                 Delete Selected ({selectedEntries.size})
               </Button>
             )}
-            {entries.length > 0 && (
+            {selectedEntries.size > 0 && (
               <Button
                 onClick={handleExportToExcel}
+                disabled={exporting}
                 className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Export to Excel
+                {exporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export Selected ({selectedEntries.size})
+                  </>
+                )}
               </Button>
             )}
           </div>
@@ -369,6 +389,7 @@ export default function ExcelManagementClient() {
             </CardTitle>
             <CardDescription className="text-muted-foreground">
               Select standard, class, and optional subject to generate test data
+              with student marks
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -440,6 +461,12 @@ export default function ExcelManagementClient() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
+                    <SelectItem
+                      value="all"
+                      className="hover:bg-accent focus:bg-accent"
+                    >
+                      All Subjects
+                    </SelectItem>
                     {availableSubjects.map((subject) => (
                       <SelectItem
                         key={subject}
@@ -547,7 +574,8 @@ export default function ExcelManagementClient() {
                     Test Entries Overview
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Manage and export test data entries
+                    Select tests to export with student marks and performance
+                    data
                   </CardDescription>
                 </div>
                 <Button
@@ -605,7 +633,9 @@ export default function ExcelManagementClient() {
                         <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">
                           Test Type
                         </th>
-
+                        <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">
+                          Subject
+                        </th>
                         <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">
                           Date
                         </th>
@@ -654,7 +684,16 @@ export default function ExcelManagementClient() {
                               {entry.testType}
                             </Badge>
                           </td>
-
+                          <td className="py-4 px-6">
+                            <Badge
+                              variant="outline"
+                              className={`${getStatusBadgeColor(
+                                entry.status
+                              )} border`}
+                            >
+                              {entry.subject || "N/A"}
+                            </Badge>
+                          </td>
                           <td className="py-4 px-6">
                             <div className="flex items-center gap-2 text-muted-foreground">
                               <Calendar className="h-4 w-4" />

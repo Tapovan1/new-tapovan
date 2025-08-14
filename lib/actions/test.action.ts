@@ -267,6 +267,7 @@ export async function getTestByStdClassSubject(
         examType: true,
         date: true,
         status: true,
+        subject: true,
       },
     });
 

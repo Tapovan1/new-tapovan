@@ -33,7 +33,7 @@ export default async function middleware(req: NextRequest) {
   }
 
   // 🔒 Redirect non-logged-in users trying to access private pages
-  if (!isLoggedIn && !isPublicRoute) {
+  if (!isLoggedIn && !isPublicRoute && isDashboard) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
