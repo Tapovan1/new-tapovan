@@ -80,6 +80,21 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: BarChart3,
     },
     {
+      name: "Excel Management",
+      href: "/admin/excel",
+      icon: FileText,
+    },
+    {
+      name: "Marks Entry",
+      href: "/admin/marks",
+      icon: BookOpen,
+    },
+    {
+      name: "Holiday Management",
+      href: "/admin/holiday",
+      icon: Calendar,
+    },
+    {
       name: "Holiday",
       href: "/admin/Holiday",
       icon: Calendar,

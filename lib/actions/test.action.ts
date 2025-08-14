@@ -244,3 +244,43 @@ export async function getTestsByExamType(examType: string, teacherId?: string) {
     return [];
   }
 }
+
+//get test by std,class,optional subject
+export async function getTestByStdClassSubject(
+  standard: string,
+  className: string,
+  subject?: string
+) {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  try {
+    const tests = await prisma.test.findMany({
+      where: {
+        standard: standard,
+        class: className,
+        ...(subject && { subject: subject }),
+      },
+      select: {
+        id: true,
+        name: true,
+        examType: true,
+        date: true,
+        status: true,
+      },
+    });
+
+    return tests.map((test) => ({
+      ...test,
+      date: test.date.toISOString().split("T")[0],
+      standard: test.standard,
+      class: test.class,
+    }));
+  } catch (error) {
+    console.error(
+      "Error fetching tests by standard, class, and subject:",
+      error
+    );
+    return [];
+  }
+}
