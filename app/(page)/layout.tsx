@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Student Management System",
-  description: "Complete student management system for schools",
+  description: "Tapovan School -  student management system for schools",
 };
 
 export default async function RootLayout({

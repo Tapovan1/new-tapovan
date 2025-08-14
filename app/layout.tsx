@@ -9,8 +9,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EduTrack Pro - Student Management System",
-  description: "Complete student management system for schools",
+  title: " Student Management System",
+  description: "Tapovan School - student management system for schools",
 };
 
 export default function RootLayout({
