@@ -16,7 +16,7 @@ interface TestInfo {
   subject: string;
   testType: string;
   date: string;
-  totalMarks: number;
+  maxMarks: number;
 }
 
 interface ExcelTestData {
@@ -141,8 +141,14 @@ export async function exportTestDataToExcel(
     subjects.forEach((subject) => {
       const subjectTests = subjectGroups[subject] || [];
       subjectTests.forEach((test) => {
+        // Find the full test info from data.tests
+        const fullTestInfo = data.tests.find((t) => t.id === test.id);
+        const maxMarksValue = fullTestInfo?.maxMarks ?? "";
+
         const testCell = testHeaderRow.getCell(currentCol);
-        testCell.value = test.testName;
+        testCell.value = maxMarksValue
+          ? `${test.testName} (${maxMarksValue})`
+          : test.testName;
         testCell.font = { bold: true, size: 10 };
         testCell.alignment = {
           horizontal: "center",
@@ -225,7 +231,7 @@ export async function exportTestDataToExcel(
             cell.value = marks;
 
             // Color code based on performance
-            const percentage = (marks / test.totalMarks) * 100;
+            const percentage = (marks / test.maxMarks) * 100;
             let fillColor = "FFFFFFFF"; // Default white
 
             if (percentage >= 80) {
@@ -348,6 +354,10 @@ export async function exportTestDataToExcel(
     return Buffer.from(buffer);
   } catch (error) {
     console.error("Error in exportTestDataToExcel:", error);
-    throw new Error(`Failed to generate Excel file: ${error.message}`);
+    const errorMessage =
+      typeof error === "object" && error !== null && "message" in error
+        ? (error as { message?: string }).message
+        : String(error);
+    throw new Error(`Failed to generate Excel file: ${errorMessage}`);
   }
 }

@@ -132,6 +132,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       href: "/attendance",
       icon: Calendar,
     },
+    {
+      name: "Attendance-Reason",
+      href: "/aattendance-reason",
+      icon: Calendar,
+    },
   ];
 
   // Function to get navigation items based on user role

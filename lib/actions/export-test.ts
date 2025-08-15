@@ -17,7 +17,7 @@ export interface TestInfo {
   subject: string;
   testType: string;
   date: string;
-  totalMarks: number;
+  maxMarks: number;
 }
 
 export interface ExcelTestData {
@@ -79,7 +79,7 @@ export async function getSelectedTestsDataForExcel(
       subject: test.subject,
       testType: test.examType || "Regular",
       date: test.date.toISOString().split("T")[0],
-      totalMarks: test.maxMarks || 100,
+      maxMarks: test.maxMarks || 100,
     }));
 
     const studentTestData: StudentTestData[] = students.map((student) => {

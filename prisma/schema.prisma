@@ -17,7 +17,7 @@ model Teacher {
   status      Status              @default(ACTIVE)
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-  attendance  Attendance[]
+ 
   assignments TeacherAssignment[]
   tests       Test[]
 }
@@ -74,12 +74,11 @@ model Mark {
 model Attendance {
   id        String             @id @default(cuid())
   date      DateTime           @db.Date
-  teacherId String
+ 
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
   class     String
   standard  String
-  teacher   Teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   records   AttendanceRecord[]
 
   @@unique([date, standard, class])
@@ -90,6 +89,7 @@ model AttendanceRecord {
   attendanceId String
   studentId    String
   isPresent    Boolean
+  reason       String? @default("")
   attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
