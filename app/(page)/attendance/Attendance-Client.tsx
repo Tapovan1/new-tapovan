@@ -43,13 +43,11 @@ import { isHoliday } from "@/lib/actions/holiday.action";
 interface AttendanceClientProps {
   teacher: any;
   assignedClasses: any[];
-  attendanceHistory: any[];
 }
 
 export default function AttendanceClient({
   teacher,
   assignedClasses,
-  attendanceHistory,
 }: AttendanceClientProps) {
   const [selectedClass, setSelectedClass] = useState("");
   const [selectedDate, setSelectedDate] = useState(
@@ -246,7 +244,7 @@ export default function AttendanceClient({
         )}
 
         {/* Recent Attendance History */}
-        {attendanceHistory.length > 0 && (
+        {/* {attendanceHistory.length > 0 && (
           <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardHeader>
               <CardTitle className="text-slate-900 dark:text-gray-100 flex items-center gap-2">
@@ -305,7 +303,7 @@ export default function AttendanceClient({
               </div>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         {/* Class and Date Selection */}
         <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">

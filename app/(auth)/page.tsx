@@ -31,7 +31,7 @@ export default function LoginPage() {
               Tapovan School
             </h2>
             <p className="text-slate-500 dark:text-gray-400 text-xs transition-colors duration-300">
-              Teacher Attendance Portal
+              Please login to continue
             </p>
           </div>
 

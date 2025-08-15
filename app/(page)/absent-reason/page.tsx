@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function AttendanceReasonsPage() {
   return (
-    <div className="min-h-screen">
+    <div className="">
       <AttendanceReasonsClient />
     </div>
   );

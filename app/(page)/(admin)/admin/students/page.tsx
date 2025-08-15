@@ -50,6 +50,7 @@ import {
   getClassesForStandard,
   type StandardKey,
 } from "@/lib/constants/index";
+import Link from "next/link";
 
 interface StudentsClientProps {
   admin?: any;
@@ -307,10 +308,12 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button variant="outline" className="gap-2 bg-transparent">
-                <FileSpreadsheet className="h-4 w-4" />
-                Bulk Upload Excel
-              </Button>
+              <Link href="/admin/bulk-import">
+                <Button className="gap-2">
+                  <FileSpreadsheet className="h-4 w-4" />
+                  Bulk Upload Excel
+                </Button>
+              </Link>
               {selectedStudents.length > 0 && (
                 <Button
                   variant="destructive"

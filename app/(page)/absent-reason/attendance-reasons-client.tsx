@@ -25,13 +25,11 @@ import {
   Search,
   FileDown,
   Users,
-  AlertCircle,
   Edit3,
   Save,
   X,
   Loader2,
   UserX,
-  ClipboardList,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -209,65 +207,6 @@ export default function AttendanceReasonsClient() {
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Statistics Cards - Only show after search */}
-        {hasSearched && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                  <UserX className="h-6 w-6 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="text-2xl font-bold text-slate-900 dark:text-gray-100">
-                  {totalAbsent}
-                </div>
-                <div className="text-slate-600 dark:text-gray-300 text-sm">
-                  Total Absent
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/40 dark:to-green-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                  <ClipboardList className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                  {withReasons}
-                </div>
-                <div className="text-slate-600 dark:text-gray-300 text-sm">
-                  With Reasons
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/40 dark:to-amber-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {withoutReasons}
-                </div>
-                <div className="text-slate-600 dark:text-gray-300 text-sm">
-                  No Reason
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardContent className="p-4 text-center">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/40 rounded-2xl flex items-center justify-center mx-auto mb-2">
-                  <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {uniqueClasses}
-                </div>
-                <div className="text-slate-600 dark:text-gray-300 text-sm">
-                  Classes Affected
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
         {/* Date Range and Actions */}
         <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
@@ -379,84 +318,105 @@ export default function AttendanceReasonsClient() {
                 {format(new Date(endDate), "MMM dd, yyyy")}
               </CardDescription>
             </CardHeader>
+
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50 dark:bg-gray-800/50 border-b border-slate-200 dark:border-gray-600/40">
-                    <tr>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Date
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Standard
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Class
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Roll No
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Name
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Reason
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {absentStudents.map((student, index) => (
-                      <tr
-                        key={student.id}
-                        className={`border-b border-slate-200 dark:border-gray-600/30 hover:bg-slate-50 dark:hover:bg-gray-700/20 transition-colors ${
-                          index % 2 === 0
-                            ? "bg-slate-25 dark:bg-gray-800/10"
-                            : ""
-                        }`}
-                      >
-                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100">
-                          {format(new Date(student.date), "dd-MM-yyyy")}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100">
-                          {student.standard}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100">
-                          {student.class}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 font-medium">
-                          {student.rollNo}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 font-medium">
-                          {student.studentName}
-                        </td>
-                        <td className="py-3 px-4 text-sm">
-                          {student.reason ? (
-                            <span className="text-slate-900 dark:text-gray-100 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-md text-xs">
-                              {student.reason}
-                            </span>
-                          ) : (
-                            <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md text-xs">
-                              NR
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3 px-4">
-                          <Button
-                            onClick={() => handleUpdateReason(student)}
-                            size="sm"
-                            className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-xs"
-                          >
-                            <Edit3 className="h-3 w-3 mr-1" />
-                            Update Reason
-                          </Button>
-                        </td>
+              <div
+                className=" w-full overflow-auto sm:overflow-visible scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent"
+                style={{ scrollbarGutter: "stable" }}
+              >
+                <div className="min-w-[800px] sm:w-full">
+                  <table>
+                    <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-gray-800/50 border-b border-slate-200 dark:border-gray-600/40">
+                      <tr>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-30">
+                          Date
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-20">
+                          Standard
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-20">
+                          Class
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-20">
+                          Roll No
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-40">
+                          Name
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-48">
+                          Reason
+                        </th>
+                        <th className="text-center py-3 px-4 text-sm font-medium text-slate-700 dark:text-gray-300 w-32">
+                          Action
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {absentStudents.map((student, index) => (
+                        <tr
+                          key={student.id}
+                          className={`border-b border-slate-200 dark:border-gray-600/30 hover:bg-slate-50 dark:hover:bg-gray-700/20 transition-colors ${
+                            index % 2 === 0
+                              ? "bg-slate-25 dark:bg-gray-800/10"
+                              : ""
+                          }`}
+                        >
+                          <td className=" text-center py-3 px-4 text-sm text-slate-900 dark:text-gray-100 w-full ">
+                            {format(new Date(student.date), "dd-MM-yyyy")}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 w-20">
+                            {student.standard}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 w-20">
+                            {student.class}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 font-medium w-20">
+                            {student.rollNo}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-slate-900 dark:text-gray-100 font-medium w-40">
+                            <div
+                              className="truncate"
+                              title={student.studentName}
+                            >
+                              {student.studentName}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-sm w-48">
+                            {student.reason ? (
+                              <div className="truncate" title={student.reason}>
+                                <span className="text-slate-900 dark:text-gray-100 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-md text-xs inline-block max-w-full truncate">
+                                  {student.reason}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/30 px-2 py-1 rounded-md text-xs whitespace-nowrap">
+                                No Reason
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 w-32">
+                            <Button
+                              onClick={() => handleUpdateReason(student)}
+                              size="sm"
+                              className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white text-xs w-full min-w-fit"
+                            >
+                              <Edit3 className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">Update</span>
+                              <span className="sm:hidden">Edit</span>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Mobile scroll hint */}
+              <div className="md:hidden p-4 text-center border-t border-slate-200 dark:border-gray-600/30 bg-slate-50/50 dark:bg-gray-800/20">
+                <p className="text-xs text-slate-500 dark:text-gray-400 flex items-center justify-center gap-2">
+                  <span>← Scroll horizontally to see all columns →</span>
+                </p>
               </div>
             </CardContent>
           </Card>

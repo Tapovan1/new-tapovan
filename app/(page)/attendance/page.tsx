@@ -1,10 +1,7 @@
 import { getUser } from "@/lib/actions/getUser";
 import { redirect } from "next/navigation";
 import AttendanceClient from "./Attendance-Client";
-import {
-  getTeacherAssignedClasses,
-  getAttendanceHistory,
-} from "@/lib/actions/attendnace.action";
+import { getTeacherAssignedClasses } from "@/lib/actions/attendnace.action";
 
 // Sample student data for attendance marking
 
@@ -34,13 +31,13 @@ export default async function AttendancePage() {
   }
 
   const assignedClasses = await getTeacherAssignedClasses(user.id);
-  const attendanceHistory = await getAttendanceHistory(user.id, 2);
+  // const attendanceHistory = await getAttendanceHistory(user.id, 2);
 
   return (
     <AttendanceClient
       teacher={user}
       assignedClasses={assignedClasses}
-      attendanceHistory={attendanceHistory}
+      // attendanceHistory={attendanceHistory}
     />
   );
 }

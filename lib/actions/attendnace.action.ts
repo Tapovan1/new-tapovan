@@ -83,11 +83,8 @@ export async function markAttendance(
           date: new Date(date),
           standard: standardNo,
           class: className,
-          teacherId: user.id,
         },
-        update: {
-          teacherId: user.id,
-        },
+        update: {},
       });
 
       // Delete existing records for this attendance
@@ -152,43 +149,43 @@ export async function getAttendanceByClass(
   return attendance;
 }
 
-export async function getAttendanceHistory(teacherId: string, limit = 10) {
-  const user = await getUser();
-  if (!user) throw new Error("Unauthorized");
+// export async function getAttendanceHistory(teacherId: string, limit = 10) {
+//   const user = await getUser();
+//   if (!user) throw new Error("Unauthorized");
 
-  // For teachers, only return their own data
-  if (user.role === "TEACHER" && user.id !== teacherId) {
-    throw new Error("Unauthorized");
-  }
+//   // For teachers, only return their own data
+//   if (user.role === "TEACHER" && user.id !== teacherId) {
+//     throw new Error("Unauthorized");
+//   }
 
-  const attendanceHistory = await prisma.attendance.findMany({
-    where: { teacherId },
-    include: {
-      records: {
-        select: {
-          isPresent: true,
-        },
-      },
-    },
-    orderBy: { date: "desc" },
-    take: limit,
-  });
+//   const attendanceHistory = await prisma.attendance.findMany({
+//     where: { teacherId },
+//     include: {
+//       records: {
+//         select: {
+//           isPresent: true,
+//         },
+//       },
+//     },
+//     orderBy: { date: "desc" },
+//     take: limit,
+//   });
 
-  return attendanceHistory.map((attendance) => ({
-    id: attendance.id,
-    date: attendance.date,
-    standard: attendance.standard,
-    class: attendance.class,
-    totalStudents: attendance.records.length,
-    presentCount: attendance.records.filter((r) => r.isPresent).length,
-    absentCount: attendance.records.filter((r) => !r.isPresent).length,
-    attendancePercentage:
-      attendance.records.length > 0
-        ? Math.round(
-            (attendance.records.filter((r) => r.isPresent).length /
-              attendance.records.length) *
-              100
-          )
-        : 0,
-  }));
-}
+//   return attendanceHistory.map((attendance) => ({
+//     id: attendance.id,
+//     date: attendance.date,
+//     standard: attendance.standard,
+//     class: attendance.class,
+//     totalStudents: attendance.records.length,
+//     presentCount: attendance.records.filter((r) => r.isPresent).length,
+//     absentCount: attendance.records.filter((r) => !r.isPresent).length,
+//     attendancePercentage:
+//       attendance.records.length > 0
+//         ? Math.round(
+//             (attendance.records.filter((r) => r.isPresent).length /
+//               attendance.records.length) *
+//               100
+//           )
+//         : 0,
+//   }));
+// }

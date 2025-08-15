@@ -133,8 +133,8 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: Calendar,
     },
     {
-      name: "Attendance-Reason",
-      href: "/aattendance-reason",
+      name: "Absent-Reason",
+      href: "/absent-reason",
       icon: Calendar,
     },
   ];
