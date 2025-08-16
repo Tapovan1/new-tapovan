@@ -4,17 +4,48 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getUser } from "./getUser";
 
-export async function getTeacherTests(teacherId?: string) {
+export const getTeacherTests = async (teacherId?: string) => {
   const user = await getUser();
   if (!user) throw new Error("Unauthorized");
 
-  // Use provided teacherId or current user's ID
   const targetTeacherId = teacherId || user.id;
 
   try {
-    const tests = await prisma.test.findMany({
+    const teacherAssignments = await prisma.teacherAssignment.findMany({
       where: { teacherId: targetTeacherId },
-      include: {
+      select: {
+        standardNo: true,
+        className: true,
+        subject: true,
+      },
+    });
+
+    if (teacherAssignments.length === 0) {
+      return [];
+    }
+
+    const testFilters = teacherAssignments.map((assignment) => ({
+      AND: [
+        { standard: assignment.standardNo },
+        { class: assignment.className },
+        { subject: assignment.subject },
+      ],
+    }));
+
+    const tests = await prisma.test.findMany({
+      where: {
+        OR: testFilters,
+      },
+      select: {
+        id: true,
+        name: true,
+        subject: true,
+        standard: true,
+        class: true,
+        date: true,
+        maxMarks: true,
+        examType: true,
+        status: true,
         _count: {
           select: {
             marks: true,
@@ -26,23 +57,37 @@ export async function getTeacherTests(teacherId?: string) {
           },
         },
       },
-      orderBy: { date: "desc" },
+      orderBy: {
+        date: "desc",
+      },
     });
-    // console.log("Fetched teacher tests:", tests);
 
-    // Transform the data to match the expected format
-    return tests.map((test) => ({
-      ...test,
-      date: test.date.toISOString().split("T")[0], // Format date as YYYY-MM-DD
-      standard: test.standard,
-      class: test.class,
-    }));
+    const testsWithStats = tests.map((test) => {
+      const totalMarks = test.marks.reduce((sum, mark) => sum + mark.marks, 0);
+      const averageMarks =
+        test.marks.length > 0 ? totalMarks / test.marks.length : 0;
+
+      return {
+        id: test.id,
+        name: test.name,
+        subject: test.subject,
+        standard: test.standard,
+        class: test.class,
+        date: test.date.toISOString().split("T")[0], // Format date efficiently
+        maxMarks: test.maxMarks,
+        examType: test.examType,
+        status: test.status,
+        totalStudents: test._count.marks,
+        averageMarks: Math.round(averageMarks * 100) / 100, // Round to 2 decimal places
+      };
+    });
+
+    return testsWithStats;
   } catch (error) {
     console.error("Error fetching teacher tests:", error);
-    return [];
+    throw new Error("Failed to fetch teacher tests");
   }
-}
-
+};
 export async function createTest(data: {
   name: string;
   subject: string;

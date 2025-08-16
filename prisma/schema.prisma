@@ -20,6 +20,10 @@ model Teacher {
  
   assignments TeacherAssignment[]
   tests       Test[]
+
+  @@index([status])
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Student {
@@ -37,6 +41,10 @@ model Student {
   marks        Mark[]
 
   @@unique([rollNo, standard, class])
+  @@index([class, standard])
+  @@index([status])
+  @@index([standard, class, status])
+  @@index([createdAt])
 }
 
 model Test {
@@ -54,6 +62,14 @@ model Test {
   examType  String
   marks     Mark[]
   teacher   Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId])
+  @@index([date])
+  @@index([class, standard])
+  @@index([status])
+  @@index([teacherId, status])
+  @@index([class, standard, date])
+  @@index([subject, class, standard])
 }
 
 model Mark {
@@ -69,12 +85,17 @@ model Mark {
   test      Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, testId])
+  @@index([studentId])
+  @@index([testId])
+  @@index([subject])
+  @@index([marks])
+  @@index([studentId, subject])
+  @@index([testId, marks])
 }
 
 model Attendance {
   id        String             @id @default(cuid())
   date      DateTime           @db.Date
- 
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
   class     String
@@ -82,6 +103,9 @@ model Attendance {
   records   AttendanceRecord[]
 
   @@unique([date, standard, class])
+  @@index([date])
+  @@index([class, standard])
+  @@index([date, class, standard])
 }
 
 model AttendanceRecord {
@@ -89,11 +113,15 @@ model AttendanceRecord {
   attendanceId String
   studentId    String
   isPresent    Boolean
-  reason       String? @default("")
+  reason       String?    @default("")
   attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
   student      Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([attendanceId, studentId])
+  @@index([attendanceId])
+  @@index([studentId])
+  @@index([isPresent])
+  @@index([studentId, isPresent])
 }
 
 model TeacherAssignment {
@@ -108,6 +136,10 @@ model TeacherAssignment {
   teacher      Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, standardNo, className, subject])
+  @@index([teacherId])
+  @@index([standardNo, className])
+  @@index([subject])
+  @@index([teacherId, standardNo, className])
 }
 
 model Holiday {
@@ -116,6 +148,8 @@ model Holiday {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([date])
 }
 
 enum TeacherRole {

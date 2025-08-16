@@ -35,9 +35,7 @@ export default async function RootLayout({
             <AppSidebar user={user} />
             <SidebarInset className="">
               <MobileHeader user={user} />
-              <main className="flex-1 overflow-auto bg-slate-950 text-white">
-                {children}
-              </main>
+              <main className="container mx-auto ">{children}</main>
             </SidebarInset>
           </SidebarProvider>
         ) : (

@@ -8,113 +8,150 @@ export async function getTeacherDashboardData() {
   if (!user) throw new Error("Unauthorized");
 
   try {
-    // Get teacher's assignments
-    const teacherAssignments = await prisma.teacherAssignment.findMany({
-      where: { teacherId: user.id },
-      orderBy: [
-        { standardNo: "asc" },
-        { className: "asc" },
-        { subject: "asc" },
-      ],
-    });
+    const [teacherAssignments, allTests, allStudents, testsCount] =
+      await Promise.all([
+        // Get teacher's assignments with better ordering
+        prisma.teacherAssignment.findMany({
+          where: { teacherId: user.id },
+          orderBy: [
+            { standardNo: "asc" },
+            { className: "asc" },
+            { subject: "asc" },
+          ],
+        }),
 
-    // Get unique classes the teacher is assigned to
-    const uniqueClasses = new Map();
-    teacherAssignments.forEach((assignment) => {
+        prisma.test.findMany({
+          where: { teacherId: user.id },
+          include: {
+            marks: {
+              select: {
+                marks: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
+
+        prisma.student.findMany({
+          where: {
+            status: "ACTIVE",
+            OR: Array.from(
+              new Set(
+                await prisma.teacherAssignment
+                  .findMany({
+                    where: { teacherId: user.id },
+                    select: { standardName: true, className: true },
+                  })
+                  .then((assignments) =>
+                    assignments.map((a) => ({
+                      standard: a.standardName,
+                      class: a.className,
+                    }))
+                  )
+              ).values()
+            ),
+          },
+          select: {
+            id: true,
+            standard: true,
+            class: true,
+          },
+        }),
+
+        prisma.test.count({
+          where: { teacherId: user.id },
+        }),
+      ]);
+
+    const uniqueClassesMap = teacherAssignments.reduce((acc, assignment) => {
       const classKey = `${assignment.standardName}-${assignment.className}`;
-      if (!uniqueClasses.has(classKey)) {
-        uniqueClasses.set(classKey, {
-          id: `${assignment.standardName}-${assignment.className}`,
-          name: `${assignment.standardName}-${assignment.className}`,
+
+      if (!acc.has(classKey)) {
+        acc.set(classKey, {
+          id: classKey,
+          name: classKey,
           standard: assignment.standardName,
           class: assignment.className,
-          subjects: [],
+          subjects: new Set([assignment.subject]),
         });
+      } else {
+        acc.get(classKey)!.subjects.add(assignment.subject);
       }
 
-      const classData = uniqueClasses.get(classKey);
-      if (!classData.subjects.includes(assignment.subject)) {
-        classData.subjects.push(assignment.subject);
+      return acc;
+    }, new Map());
+
+    const studentsByClass = allStudents.reduce((acc, student) => {
+      const classKey = `${student.standard}-${student.class}`;
+      if (!acc[classKey]) acc[classKey] = [];
+      acc[classKey].push(student);
+      return acc;
+    }, {} as Record<string, typeof allStudents>);
+
+    const testsByClass = allTests.reduce((acc, test) => {
+      const classKey = `${test.standard}-${test.class}`;
+      if (!acc[classKey]) acc[classKey] = [];
+      acc[classKey].push(test);
+      return acc;
+    }, {} as Record<string, typeof allTests>);
+
+    const myClasses = Array.from(uniqueClassesMap.entries()).map(
+      ([classKey, classData]) => {
+        const students = studentsByClass[classKey] || [];
+        const classTests = testsByClass[classKey] || [];
+
+        const { totalMarks, totalMaxMarks } = classTests.reduce(
+          (acc, test) => {
+            const testMarksSum = test.marks.reduce(
+              (sum, mark) => sum + mark.marks,
+              0
+            );
+            return {
+              totalMarks: acc.totalMarks + testMarksSum,
+              totalMaxMarks:
+                acc.totalMaxMarks + test.maxMarks * test.marks.length,
+            };
+          },
+          { totalMarks: 0, totalMaxMarks: 0 }
+        );
+
+        const avgMarks =
+          totalMaxMarks > 0
+            ? Math.round((totalMarks / totalMaxMarks) * 100)
+            : 0;
+        const avgAttendance = 85; // Mock attendance - replace with actual calculation
+
+        return {
+          ...classData,
+          subjects: Array.from(classData.subjects),
+          students: students.length,
+          avgMarks,
+          attendance: avgAttendance,
+          subjectsCount: classData.subjects.size,
+          subjectsList: Array.from(classData.subjects).join(", "),
+        };
       }
+    );
 
-      // Update class teacher status if any assignment has it
-    });
+    const recentTests = allTests.slice(0, 5);
 
-    // Get students for each class
-    const myClasses = [];
-    for (const [classKey, classData] of uniqueClasses) {
-      const students = await prisma.student.findMany({
-        where: {
-          standard: classData.standard,
-          class: classData.class,
-          status: "ACTIVE",
-        },
-      });
-
-      // Calculate average marks for this teacher's subjects in this class
-      const tests = await prisma.test.findMany({
-        where: {
-          teacherId: user.id,
-          standard: classData.standard,
-          class: classData.class,
-        },
-        include: {
-          marks: true,
-        },
-      });
-
-      let totalMarks = 0;
-      let totalMaxMarks = 0;
-      tests.forEach((test) => {
-        test.marks.forEach((mark) => {
-          totalMarks += mark.marks;
-          totalMaxMarks += test.maxMarks;
-        });
-      });
-
-      const avgMarks =
-        totalMaxMarks > 0 ? Math.round((totalMarks / totalMaxMarks) * 100) : 0;
-
-      // Calculate attendance (mock for now)
-      const avgAttendance = 85; // This would be calculated from actual attendance data
-
-      myClasses.push({
-        ...classData,
-        students: students.length,
-        avgMarks,
-        attendance: avgAttendance,
-        subjectsCount: classData.subjects.length,
-        subjectsList: classData.subjects.join(", "),
-      });
-    }
-
-    // Get recent tests created by teacher
-    const recentTests = await prisma.test.findMany({
-      where: { teacherId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-
-    // Format recent activity
     const recentActivity = recentTests.map((test) => ({
-      type: "test_created",
+      type: "test_created" as const,
       title: test.name,
       description: `Test created for ${test.subject} - ${test.standard}-${test.class}`,
       time: getRelativeTime(test.createdAt),
-      status: test.status === "COMPLETED" ? "completed" : "pending",
+      status:
+        test.status === "COMPLETED"
+          ? ("completed" as const)
+          : ("pending" as const),
     }));
 
-    // Calculate statistics
     const totalClasses = myClasses.length;
     const totalStudents = myClasses.reduce((sum, cls) => sum + cls.students, 0);
-    const testsCreated = await prisma.test.count({
-      where: { teacherId: user.id },
-    });
     const totalSubjects = new Set(teacherAssignments.map((a) => a.subject))
       .size;
     const classTeacherOf = myClasses.filter((cls) => cls.isClassTeacher);
 
-    // Calculate average attendance across all classes
     const avgAttendance =
       myClasses.length > 0
         ? Math.round(
@@ -138,7 +175,7 @@ export async function getTeacherDashboardData() {
       stats: {
         totalClasses,
         totalStudents,
-        testsCreated,
+        testsCreated: testsCount,
         totalSubjects,
         avgAttendance,
         classTeacherOf: classTeacherOf.length,
@@ -148,7 +185,6 @@ export async function getTeacherDashboardData() {
   } catch (error) {
     console.error("Error fetching teacher dashboard data:", error);
 
-    // Return empty data structure to prevent crashes
     return {
       teacher: {
         ...user,
@@ -170,7 +206,6 @@ export async function getTeacherDashboardData() {
         classTeacherOf: 0,
       },
       assignments: [],
-      classTeacherClasses: [],
     };
   }
 }
