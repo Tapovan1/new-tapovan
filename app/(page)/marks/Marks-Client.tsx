@@ -84,8 +84,10 @@ export default function MarksClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const testIdFromUrl = searchParams.get("test");
+  const stdFromUrl = searchParams.get("standard");
+  const classFromUrl = searchParams.get("class");
+  const subjectFromUrl = searchParams.get("subject");
 
-  // Initialize all state with proper default values
   const [tests, setTests] = useState<any[]>(initialTests || []);
   const [selectedExamType, setSelectedExamType] = useState<string>("");
   const [selectedTest, setSelectedTest] = useState<string>("");
@@ -97,31 +99,45 @@ export default function MarksClient({
   const [saving, setSaving] = useState<boolean>(false);
   const [filteredTests, setFilteredTests] = useState<any[]>([]);
 
-  // Hierarchical selection state
   const [assignedData, setAssignedData] = useState<any[]>([]);
   const [selectedStandard, setSelectedStandard] = useState<string>("");
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [selectedSubject, setSelectedSubject] = useState<string>("");
 
-  // New test creation fields
   const [newTestName, setNewTestName] = useState<string>("");
   const [testDate, setTestDate] = useState<string>("");
   const [maxMarks, setMaxMarks] = useState<string>("");
   const [chapterName, setChapterName] = useState<string>("");
 
-  // Initialize date on client side only to avoid hydration mismatch
   useEffect(() => {
     if (!testDate) {
       setTestDate(new Date().toISOString().split("T")[0]);
     }
   }, [testDate]);
 
-  // Load teacher's assigned data on component mount
   useEffect(() => {
     loadTeacherAssignedData();
   }, []);
 
-  // Load tests when exam type changes
+  useEffect(() => {
+    if (stdFromUrl || classFromUrl || subjectFromUrl) {
+      if (!testIdFromUrl) {
+        setSelectedTest("new");
+        setIsCreatingNew(true);
+      }
+
+      if (stdFromUrl) {
+        setSelectedStandard(stdFromUrl);
+      }
+      if (classFromUrl) {
+        setSelectedClass(classFromUrl);
+      }
+      if (subjectFromUrl) {
+        setSelectedSubject(subjectFromUrl);
+      }
+    }
+  }, [stdFromUrl, classFromUrl, subjectFromUrl, testIdFromUrl]);
+
   useEffect(() => {
     if (selectedExamType) {
       loadTestsByExamType(selectedExamType);
@@ -131,7 +147,6 @@ export default function MarksClient({
     setSelectedTest("");
   }, [selectedExamType]);
 
-  // Handle test ID from URL parameters
   useEffect(() => {
     if (testIdFromUrl && testIdFromUrl !== selectedTest) {
       loadTestFromUrl(testIdFromUrl);
@@ -143,7 +158,6 @@ export default function MarksClient({
     try {
       const testData = await getTestById(testId);
       if (testData) {
-        // Auto-fill all the form fields based on test data
         setSelectedExamType(testData.examType || "");
         setSelectedTest(testId);
         setSelectedStandard(testData.standard || "");
@@ -160,11 +174,9 @@ export default function MarksClient({
         setMaxMarks(testData.maxMarks?.toString() || "");
         setChapterName((testData as any).chapter || "");
 
-        // Set current test and students
         setCurrentTest(testData);
         setStudents(Array.isArray(testData.students) ? testData.students : []);
 
-        // Load existing marks
         const existingMarks: { [key: string]: string } = {};
         if (Array.isArray(testData.marks)) {
           testData.marks.forEach((mark: any) => {
@@ -173,7 +185,6 @@ export default function MarksClient({
         }
         setMarks(existingMarks);
 
-        // Load the exam type's tests to populate the dropdown
         if (testData.examType) {
           await loadTestsByExamType(testData.examType);
         }
@@ -206,7 +217,6 @@ export default function MarksClient({
     }
   };
 
-  // Get available classes and subjects based on selected standard
   const selectedStandardData = assignedData.find(
     (item) => item.standard.id === selectedStandard
   );
@@ -236,7 +246,6 @@ export default function MarksClient({
       if (testData) {
         setCurrentTest(testData);
         setStudents(Array.isArray(testData.students) ? testData.students : []);
-        // Load existing marks with proper initialization
         const existingMarks: { [key: string]: string } = {};
         if (Array.isArray(testData.marks)) {
           testData.marks.forEach((mark: any) => {
@@ -244,7 +253,6 @@ export default function MarksClient({
           });
         }
         setMarks(existingMarks);
-        // Set hierarchical selections based on test data
         setSelectedStandard(testData.standard || "");
         setSelectedClass(testData.class || "");
         setSelectedSubject(testData.subject || "");
@@ -379,7 +387,6 @@ export default function MarksClient({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-gray-950 dark:via-gray-900 dark:to-indigo-950/30 transition-colors duration-300">
-      {/* Enhanced Top Navigation */}
       <div className="bg-white/80 dark:bg-gray-900/90 backdrop-blur-lg border-b border-slate-200 dark:border-gray-600/50 px-4 sm:px-6 py-4 sm:py-6 sticky top-0 z-30">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -392,6 +399,11 @@ export default function MarksClient({
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-gray-300">
                 Enter marks for your students
+                {(stdFromUrl || classFromUrl || subjectFromUrl) && (
+                  <span className="ml-2 text-indigo-600 dark:text-indigo-400">
+                    • Auto-filled from selection
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -406,20 +418,28 @@ export default function MarksClient({
       </div>
 
       <div className="p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
-        {/* Exam Type and Test Selection */}
         <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
           <CardHeader>
             <CardTitle className="text-slate-900 dark:text-gray-100 flex items-center gap-2">
               <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
               Create Mark Entry
+              {(stdFromUrl || classFromUrl || subjectFromUrl) && (
+                <Badge className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 text-xs">
+                  Auto-filled
+                </Badge>
+              )}
             </CardTitle>
             <CardDescription className="text-slate-600 dark:text-gray-300">
               Select exam type and test to enter marks
+              {(stdFromUrl || classFromUrl || subjectFromUrl) && (
+                <span className="block mt-1 text-indigo-600 dark:text-indigo-400 text-sm">
+                  Form fields have been pre-filled based on your selection
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {/* Exam Type Selection */}
               <div className="space-y-2">
                 <Label className="text-slate-700 dark:text-gray-300 font-medium">
                   1. Exam Type
@@ -449,7 +469,6 @@ export default function MarksClient({
                 )}
               </div>
 
-              {/* Test Selection */}
               <div className="space-y-2">
                 <Label className="text-slate-700 dark:text-gray-300 font-medium">
                   2. Select Test
@@ -509,7 +528,6 @@ export default function MarksClient({
           </CardContent>
         </Card>
 
-        {/* Create New Test Dialog */}
         {selectedTest === "new" && (
           <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardHeader>
@@ -523,7 +541,6 @@ export default function MarksClient({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {/* Test Name */}
                 <div className="space-y-2">
                   <Label
                     htmlFor="testName"
@@ -540,7 +557,6 @@ export default function MarksClient({
                   />
                 </div>
 
-                {/* Chapter Name (if required) */}
                 {getCurrentExamType()?.hasChapter && (
                   <div className="space-y-2">
                     <Label
@@ -560,7 +576,6 @@ export default function MarksClient({
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Standard Selection */}
                   <div className="space-y-2">
                     <Label className="text-slate-700 dark:text-gray-300 font-medium">
                       Standard
@@ -587,7 +602,6 @@ export default function MarksClient({
                     </Select>
                   </div>
 
-                  {/* Class Selection */}
                   <div className="space-y-2">
                     <Label className="text-slate-700 dark:text-gray-300 font-medium">
                       Class
@@ -621,7 +635,6 @@ export default function MarksClient({
                     </Select>
                   </div>
 
-                  {/* Subject Selection */}
                   <div className="space-y-2">
                     <Label className="text-slate-700 dark:text-gray-300 font-medium">
                       Subject
@@ -652,7 +665,6 @@ export default function MarksClient({
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Date Selection */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="testDate"
@@ -672,7 +684,6 @@ export default function MarksClient({
                     </div>
                   </div>
 
-                  {/* Max Marks */}
                   <div className="space-y-2">
                     <Label
                       htmlFor="maxMarks"
@@ -688,7 +699,7 @@ export default function MarksClient({
                       placeholder={
                         getCurrentExamType()?.maxMarks?.toString() || ""
                       }
-                      className="bg-slate-50 dark:bg-gray-700/60 border-slate-200 dark:border-gray-600/40 text-slate-900 dark:text-gray-100"
+                      className="bg-slate-50 dark:bg-gray-700/60 border border-slate-200 dark:border-gray-600/40 rounded-md text-slate-900 dark:text-gray-100 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/25"
                     />
                   </div>
                 </div>
@@ -715,7 +726,6 @@ export default function MarksClient({
           </Card>
         )}
 
-        {/* Loading State */}
         {loading && (
           <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardContent className="text-center py-12">
@@ -730,7 +740,6 @@ export default function MarksClient({
           </Card>
         )}
 
-        {/* Students Marks Entry */}
         {!loading && students.length > 0 && currentTest && (
           <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
             <CardHeader>
@@ -772,22 +781,18 @@ export default function MarksClient({
               </div>
             </CardHeader>
             <CardContent>
-              {/* Mobile-First Design */}
               <div className="space-y-3">
-                {/* Header for larger screens */}
                 <div className="hidden sm:grid sm:grid-cols-3 gap-4 p-3 bg-slate-100 dark:bg-gray-700/50 rounded-lg font-medium text-slate-700 dark:text-gray-300">
                   <div>Roll No</div>
                   <div>Student Name</div>
                   <div className="text-center">Marks</div>
                 </div>
 
-                {/* Student Rows */}
                 {students.map((student) => (
                   <div
                     key={student.id}
                     className="p-3 sm:p-4 bg-slate-50 dark:bg-gray-700/30 rounded-lg border border-slate-200 dark:border-gray-600/30"
                   >
-                    {/* Mobile Layout */}
                     <div className="sm:hidden space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -823,7 +828,6 @@ export default function MarksClient({
                       </div>
                     </div>
 
-                    {/* Desktop Layout */}
                     <div className="hidden sm:grid sm:grid-cols-3 gap-4 items-center">
                       <div>
                         <Badge
@@ -874,7 +878,6 @@ export default function MarksClient({
           </Card>
         )}
 
-        {/* Empty State */}
         {!loading &&
           selectedTest &&
           students.length === 0 &&

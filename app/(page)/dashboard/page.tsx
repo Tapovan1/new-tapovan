@@ -73,54 +73,46 @@ export default async function TeacherDashboard() {
 
             {dashboardData.myClasses.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                {dashboardData.myClasses.map((classItem) => (
-                  <Card
-                    key={classItem.id}
-                    className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group"
-                  >
-                    <CardHeader className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
-                            {classItem.name}
-                          </CardTitle>
-                          <CardDescription className="text-slate-600 dark:text-slate-300">
-                            Standard {classItem.standard} • Class{" "}
-                            {classItem.class}
-                          </CardDescription>
-                        </div>
-                        <Badge className="flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                          <Users className="w-3 h-3" />
-                          {classItem.students} students
-                        </Badge>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {classItem.subjects.map((subject, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                          >
-                            {subject}
+                {dashboardData.myClasses.flatMap((classItem) =>
+                  classItem.subjects.map((subject, index) => (
+                    <Card
+                      key={`${classItem.id}-${subject}-${index}`}
+                      className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group"
+                    >
+                      <CardHeader className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <CardTitle className="text-xl font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-200">
+                              {classItem.name} - {subject}
+                            </CardTitle>
+                            <CardDescription className="text-slate-600 dark:text-slate-300">
+                              Standard {classItem.standard} • Class{" "}
+                              {classItem.class}
+                            </CardDescription>
+                          </div>
+                          <Badge className="flex items-center gap-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            <Users className="w-3 h-3" />
+                            {classItem.students} students
                           </Badge>
-                        ))}
-                      </div>
-                    </CardHeader>
+                        </div>
+                      </CardHeader>
 
-                    <CardContent className="space-y-4">
-                      <Link
-                        href={`/marks?standard=${classItem.standard}&class=${classItem.class}`}
-                        className="block"
-                      >
-                        <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-600/25 group-hover:shadow-xl transition-all duration-300">
-                          <TrendingUp className="w-4 h-4 mr-2" />
-                          Enter Marks
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <CardContent className="space-y-4">
+                        <Link
+                          href={`/marks?standard=${classItem.standard}&class=${
+                            classItem.class
+                          }&subject=${encodeURIComponent(subject)}`}
+                          className="block"
+                        >
+                          <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-600/25 group-hover:shadow-xl transition-all duration-300">
+                            <TrendingUp className="w-4 h-4 mr-2" />
+                            Enter Marks
+                          </Button>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             ) : (
               <Card className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700">
