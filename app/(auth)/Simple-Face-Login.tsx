@@ -293,8 +293,12 @@ export default function SimpleFaceLogin({ onSuccess }: SimpleFaceLoginProps) {
             autoPlay
             playsInline
             muted
-            className="w-full rounded-2xl bg-black"
-            style={{ aspectRatio: '4/3', transform: 'scaleX(-1)' }}
+            className="w-full rounded-2xl bg-black object-cover"
+            style={{ 
+              aspectRatio: '4/3', 
+              transform: 'scaleX(-1) scale(1.5)',
+              transformOrigin: 'center center'
+            }}
           />
           <canvas ref={canvasRef} className="hidden" />
           
