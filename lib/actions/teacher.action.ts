@@ -12,6 +12,7 @@ export async function getAllTeacher() {
         email: true,
         role: true,
         username: true,
+        Isface: true,
       },
     });
 

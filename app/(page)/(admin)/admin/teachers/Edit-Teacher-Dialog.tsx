@@ -56,14 +56,17 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const username = formData.get("username") as string;
-    const role = formData.get("role") as "ADMIN | TEACHER | ATEACHER";
+    const role = formData.get("role") as "ADMIN" | "TEACHER" | "ATEACHER";
 
     const result = await updateTeacher(id, name, email, username, role);
 
     if (result.success) {
+      // Close dialog first
       setIsOpen(false);
-      // Refresh the page or use router.refresh()
-      router.reload();
+      // Then refresh the data
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
     }
 
     return result;
@@ -75,9 +78,9 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button
-          size="sm"
+          size="icon"
           variant="ghost"
-          className="text-green-500 hover:text-green-600 hover:bg-green-500/10 transition-colors"
+          className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -175,9 +178,9 @@ export default function EditTeacherDialog({ teacher }: EditTeacherDialogProps) {
             </p>
           </div>
 
-          {state?.error && (
+          {state && !state.success && (
             <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-              <p className="text-destructive text-sm">{state.error}</p>
+              <p className="text-destructive text-sm">{state.message}</p>
             </div>
           )}
 

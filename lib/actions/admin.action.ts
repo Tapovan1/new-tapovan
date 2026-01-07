@@ -7,6 +7,7 @@ import {
   getStandardsList,
   standards,
 } from "../constants";
+import { TeacherRole } from "../generated/prisma/enums";
 
 export async function getTeacherDashboardData() {
   const user = await getUser();
@@ -123,69 +124,75 @@ export async function getAdminDashboardData() {
   const allStandards = getStandardsList();
 
   // Get student counts for each standard-class combination
-  const standardsData = await Promise.all(
-    allStandards.map(async (standardKey) => {
-      const classes = getClassesForStandard(standardKey);
+  // const standardsData = await Promise.all(
+  //   allStandards.map(async (standardKey) => {
+  //     const classes = getClassesForStandard(standardKey);
 
       // Get student count for each class in this standard
-      const classData = await Promise.all(
-        classes.map(async (className) => {
-          const studentCount = await prisma.student.count({
-            where: {
-              standard: standardKey,
-              class: className,
-              status: "ACTIVE",
-            },
-          });
-          return { className, studentCount };
-        })
-      );
+      // const classData = await Promise.all(
+      //   classes.map(async (className) => {
+      //     const studentCount = await prisma.student.count({
+      //       where: {
+      //         standard: standardKey,
+      //         class: className,
+      //         status: "ACTIVE",
+      //       },
+      //     });
+      //     return { className, studentCount };
+      //   })
+      // );
 
       // Calculate total students and active classes for this standard
-      const totalStudents = classData.reduce(
-        (sum, cls) => sum + cls.studentCount,
-        0
-      );
-      const activeClasses = classData.filter(
-        (cls) => cls.studentCount > 0
-      ).length;
+  //     const totalStudents = classData.reduce(
+  //       (sum, cls) => sum + cls.studentCount,
+  //       0
+  //     );
+  //     const activeClasses = classData.filter(
+  //       (cls) => cls.studentCount > 0
+  //     ).length;
 
-      return {
-        name: standardKey,
-        students: totalStudents,
-        classes: activeClasses, // Only count classes that have students
-        totalPossibleClasses: classes.length, // Total classes defined in constants
-      };
-    })
-  );
+  //     return {
+  //       name: standardKey,
+  //       students: totalStudents,
+  //       classes: activeClasses, // Only count classes that have students
+  //       totalPossibleClasses: classes.length, // Total classes defined in constants
+  //     };
+  //   })
+  // );
 
   // Filter out standards with no students and sort properly
-  const standardsFiltered = standardsData
-    .filter((standard) => standard.students > 0)
-    .sort((a, b) => {
-      // Sort standards properly (KG1, KG2, 1, 2, 3, etc.)
-      const getOrder = (name: string) => {
-        if (name === "KG1") return 0;
-        if (name === "KG2") return 1;
-        return Number.parseInt(name) || 999;
-      };
-      return getOrder(a.name) - getOrder(b.name);
-    });
+  // const standardsFiltered = standardsData
+  //   .filter((standard) => standard.students > 0)
+  //   .sort((a, b) => {
+  //     // Sort standards properly (KG1, KG2, 1, 2, 3, etc.)
+  //     const getOrder = (name: string) => {
+  //       if (name === "KG1") return 0;
+  //       if (name === "KG2") return 1;
+  //       return Number.parseInt(name) || 999;
+  //     };
+  //     return getOrder(a.name) - getOrder(b.name);
+  //   });
 
   // Calculate overall statistics
   const totalStudents = await prisma.student.count({
     where: { status: "ACTIVE" },
   });
 
+  //active also not admin
   const totalTeachers = await prisma.teacher.count({
-    where: { status: "ACTIVE" },
-  });
+    where:{
+      NOT:{
+        role:TeacherRole.ADMIN
+      },
+      status:"ACTIVE"
+    }
+  })
 
   // Calculate total active classes (classes with students)
-  const totalActiveClasses = standardsFiltered.reduce(
-    (sum, std) => sum + std.classes,
-    0
-  );
+  // const totalActiveClasses = standardsFiltered.reduce(
+  //   (sum, std) => sum + std.classes,
+  //   0
+  // );
 
   // Calculate total possible classes from constants
   const totalPossibleClasses = Object.values(standards).reduce(
@@ -219,55 +226,60 @@ export async function getAdminDashboardData() {
   }));
 
   // Get today's date for attendance check
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const indianDateString = new Date().toLocaleDateString("en-CA", {
+      timeZone: "Asia/Kolkata",
+    });
+
+    const formattedIndianDate = new Date(indianDateString);
+ 
+  
 
   // Check attendance marked today
   const attendanceMarkedToday = await prisma.attendance.count({
     where: {
-      date: today,
+      date: formattedIndianDate,
     },
   });
 
   // Calculate classes that should mark attendance (active classes)
-  const attendanceNotMarked = Math.max(
-    0,
-    totalActiveClasses - attendanceMarkedToday
-  );
+  // const attendanceNotMarked = Math.max(
+  //   0,
+  //   totalActiveClasses - attendanceMarkedToday
+  // );
 
   // Pending actions (calculated from real data)
-  const pendingActions = [
-    {
-      type: "attendance",
-      title: "Attendance Not Marked",
-      description: `${attendanceNotMarked} classes haven't marked today's attendance`,
-      count: attendanceNotMarked,
-      priority:
-        attendanceNotMarked > 5
-          ? "high"
-          : attendanceNotMarked > 2
-          ? "medium"
-          : "low",
-      action: "Mark Now",
-    },
-    {
-      type: "marks",
-      title: "Pending Evaluations",
-      description: "Tests pending marks entry",
-      count: pendingTests,
-      priority:
-        pendingTests > 10 ? "high" : pendingTests > 5 ? "medium" : "low",
-      action: "Review",
-    },
-    {
-      type: "system",
-      title: "System Overview",
-      description: `${totalActiveClasses} active classes out of ${totalPossibleClasses} possible`,
-      count: totalPossibleClasses - totalActiveClasses,
-      priority: "low",
-      action: "Review",
-    },
-  ].filter((action) => action.count > 0);
+  // const pendingActions = [
+  //   {
+  //     type: "attendance",
+  //     title: "Attendance Not Marked",
+  //     description: `${attendanceNotMarked} classes haven't marked today's attendance`,
+  //     count: attendanceNotMarked,
+  //     priority:
+  //       attendanceNotMarked > 5
+  //         ? "high"
+  //         : attendanceNotMarked > 2
+  //         ? "medium"
+  //         : "low",
+  //     action: "Mark Now",
+  //   },
+  //   {
+  //     type: "marks",
+  //     title: "Pending Evaluations",
+  //     description: "Tests pending marks entry",
+  //     count: pendingTests,
+  //     priority:
+  //       pendingTests > 10 ? "high" : pendingTests > 5 ? "medium" : "low",
+  //     action: "Review",
+  //   },
+  //   {
+  //     type: "system",
+  //     title: "System Overview",
+  //     description: `${totalActiveClasses} active classes out of ${totalPossibleClasses} possible`,
+  //     count: totalPossibleClasses - totalActiveClasses,
+  //     priority: "low",
+  //     action: "Review",
+  //   },
+  // ].filter((action) => action.count > 0);
 
   // Quick stats with better metrics
   const quickStats = [
@@ -283,15 +295,15 @@ export async function getAdminDashboardData() {
       trend: "+0",
       color: "green",
     },
-    {
-      label: "Active Classes",
-      value: `${totalActiveClasses}/${totalPossibleClasses}`,
-      trend:
-        totalActiveClasses === totalPossibleClasses
-          ? "100%"
-          : `${Math.round((totalActiveClasses / totalPossibleClasses) * 100)}%`,
-      color: "purple",
-    },
+    // {
+    //   label: "Active Classes",
+    //   value: `${totalActiveClasses}/${totalPossibleClasses}`,
+    //   trend:
+    //     totalActiveClasses === totalPossibleClasses
+    //       ? "100%"
+    //       : `${Math.round((totalActiveClasses / totalPossibleClasses) * 100)}%`,
+    //   color: "purple",
+    // },
     {
       label: "Pending Tests",
       value: pendingTests.toString(),
@@ -302,15 +314,15 @@ export async function getAdminDashboardData() {
 
   return {
     admin: user,
-    standards: standardsFiltered,
+    // standards: standardsFiltered,
     recentActivity,
-    pendingActions,
+    // pendingActions,
     quickStats,
     systemStats: {
-      totalActiveClasses,
+      // totalActiveClasses,
       totalPossibleClasses,
       attendanceMarkedToday,
-      attendanceNotMarked,
+      // attendanceNotMarked,
     },
   };
 }

@@ -37,14 +37,14 @@ export default function LoginForm({ loginAction }: LoginFormProps) {
             htmlFor="username"
             className="text-slate-700 dark:text-gray-200 font-medium flex items-center transition-colors duration-300"
           >
-            Username
+            Email
           </Label>
           <div className="relative">
             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400 dark:text-gray-400 transition-colors duration-300" />
             <Input
               id="username"
               name="username"
-              placeholder="Enter your username"
+              placeholder="Enter your email id"
               type="text"
               required
               className="pl-10 h-12 bg-white dark:bg-gray-700 border-slate-200 dark:border-gray-600 text-slate-900 dark:text-gray-100 placeholder:text-slate-400 dark:placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 hover:border-slate-300 dark:hover:border-gray-500"

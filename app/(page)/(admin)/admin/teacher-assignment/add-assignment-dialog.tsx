@@ -33,6 +33,7 @@ import {
   getSubjectsForStandard,
   type StandardKey,
 } from "@/lib/constants/index";
+import { useRouter } from "next/navigation";
 
 interface Teacher {
   id: string;
@@ -55,6 +56,7 @@ export default function AddAssignmentDialog({
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [isClassTeacher, setIsClassTeacher] = useState(false);
+  const router = useRouter();
 
   const addAssignmentAction = async (prevState: any, formData: FormData) => {
     const teacherId = formData.get("teacherId") as string;
@@ -73,7 +75,10 @@ export default function AddAssignmentDialog({
     if (result.success) {
       setIsOpen(false);
       resetForm();
-      window.location.reload();
+      // Refresh server data without full page reload
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
     }
 
     return result;
@@ -335,7 +340,7 @@ export default function AddAssignmentDialog({
         {state?.success && (
           <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
             <p className="text-emerald-600 dark:text-emerald-400 text-sm">
-              {state.message}
+              Assignment created successfully!
             </p>
           </div>
         )}

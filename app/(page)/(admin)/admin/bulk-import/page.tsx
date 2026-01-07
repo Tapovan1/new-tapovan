@@ -29,17 +29,7 @@ import Link from "next/link";
 import { bulkCreateStudents } from "@/lib/actions/student.action";
 import { isValidStandardClassCombination } from "@/lib/constants/index";
 
-function generateEnrollmentNo(standard: string, rollNo: number): string {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2);
-  let standardCode = "00";
-  const stdNum = Number.parseInt(standard);
-  if (!isNaN(stdNum)) {
-    standardCode = stdNum.toString().padStart(2, "0");
-  }
-  const rollNoFormatted = rollNo.toString().padStart(4, "0");
-  return `${yearSuffix}${standardCode}${rollNoFormatted}`;
-}
+
 
 function parseCSV(csvText: string): any[] {
   const lines = csvText.split("\n").filter((line) => line.trim());
@@ -62,11 +52,6 @@ function parseCSV(csvText: string): any[] {
       // Map common field variations
       let fieldName = normalizedHeader;
       if (
-        normalizedHeader.includes("gr") &&
-        normalizedHeader.includes("number")
-      ) {
-        fieldName = "grnumber";
-      } else if (
         normalizedHeader.includes("roll") &&
         normalizedHeader.includes("number")
       ) {
@@ -130,22 +115,16 @@ export default function BulkImport() {
 
     data.forEach((row, index) => {
       const rowNum = index + 1;
+      const id = row.id || row.ID || "";
 
       // Required field validation with better field mapping
       if (!row.name)
         errors.push({ row: rowNum, field: "name", error: "Name is required" });
 
-      const grNo = row.grNo || row.grnumber || row.gr || "";
       const rollNo = row.rollNo || row.rollnumber || row.roll || "";
       const standard = row.standard?.toString() || "";
       const className = row.class || row.classname || "";
-
-      if (!grNo)
-        errors.push({
-          row: rowNum,
-          field: "grNo",
-          error: "GR Number is required",
-        });
+      const subClass = row.subclass || row.subclass || "";
       if (!rollNo)
         errors.push({
           row: rowNum,
@@ -165,18 +144,7 @@ export default function BulkImport() {
           error: "Class is required",
         });
 
-      // Duplicate GR Number check
-      if (grNo) {
-        if (grNumbers.has(grNo)) {
-          errors.push({
-            row: rowNum,
-            field: "grNo",
-            error: `Duplicate GR Number: ${grNo}`,
-          });
-        } else {
-          grNumbers.add(grNo);
-        }
-      }
+
 
       // Standard-Class combination validation
       if (
@@ -190,6 +158,12 @@ export default function BulkImport() {
           error: `Invalid standard-class combination: ${standard} - ${className}`,
         });
       }
+      // if (!subClass)
+      //   errors.push({
+      //     row: rowNum,
+      //     field: "subClass",
+      //     error: "SubClass is required",
+      //   });
 
       // Duplicate Roll Number in same standard-class
       if (standard && className && rollNo) {
@@ -209,13 +183,7 @@ export default function BulkImport() {
         }
       }
 
-      // Auto-generate enrollment number if missing
-      if (!row.enrollmentno && !row.enrollmentnumber && standard && rollNo) {
-        row.enrollmentNo = generateEnrollmentNo(
-          standard,
-          Number.parseInt(rollNo)
-        );
-      }
+
     });
 
     setValidationErrors(errors);
@@ -243,13 +211,12 @@ export default function BulkImport() {
 
       // Normalize data structure for students only
       const normalizedData = parsedData.map((row) => ({
+        id: row.id || row.ID || "",
         name: row.name || "",
-        grNo: row.grno || row.grnumber || row.gr || "",
         rollNo: row.rollno || row.rollnumber || row.roll || "",
         standard: row.standard?.toString() || "",
         class: row.class || row.classname || "",
-        enrollmentNo:
-          row.enrollmentno || row.enrollmentnumber || row.enrollmentNo || "",
+        subclass: row.subclass || row.subclass || "",
       }));
 
       setPreviewData(normalizedData);
@@ -274,13 +241,12 @@ export default function BulkImport() {
     try {
       // Prepare data for bulk creation
       const studentsData = previewData.map((row) => ({
-        grNo: row.grNo,
+        id: row.id,
         name: row.name,
-        enrollmentNo:
-          row.enrollmentNo ||
-          generateEnrollmentNo(row.standard, Number.parseInt(row.rollNo)),
+        rollNo: Number.parseInt(row.rollNo),
         standard: row.standard,
         className: row.class,
+        subclass: row.subclass,
       }));
 
       // Update progress to 30%
@@ -337,11 +303,11 @@ export default function BulkImport() {
   };
 
   const generateTemplate = () => {
-    const headers = ["Name", "GR Number", "Roll Number", "Standard", "Class"];
+    const headers = ["Name", "Roll Number", "Standard", "Class"];
     const sampleData = [
-      ["Alex Johnson", "GR003", "3", "8", "Nachiketa"],
-      ["Jane Smith", "GR002", "2", "8", "Dhruv"],
-      ["Thakkar Smit", "GR001", "1", "4", "Dhruv"],
+      ["Alex Johnson", "3", "8", "Nachiketa"],
+      ["Jane Smith", "2", "8", "Dhruv"],
+      ["Thakkar Smit", "1", "4", "Dhruv"],
     ];
 
     const csvContent = [headers, ...sampleData]
@@ -397,8 +363,7 @@ export default function BulkImport() {
                 Upload File
               </CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-400">
-                Select your CSV/Excel file to import student data. Enrollment
-                numbers will be auto-generated.
+                Select your CSV/Excel file to import student data.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -520,9 +485,6 @@ export default function BulkImport() {
                 <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
                   <Eye className="h-5 w-5" />
                   Data Preview
-                  <Badge variant="secondary" className="ml-2">
-                    Auto-Generated Enrollment Numbers
-                  </Badge>
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
                   Preview of data to be imported ({previewData.length} records)
@@ -537,9 +499,6 @@ export default function BulkImport() {
                           Name
                         </th>
                         <th className="text-left p-2 font-medium text-gray-900 dark:text-white">
-                          GR No
-                        </th>
-                        <th className="text-left p-2 font-medium text-gray-900 dark:text-white">
                           Roll No
                         </th>
                         <th className="text-left p-2 font-medium text-gray-900 dark:text-white">
@@ -549,7 +508,7 @@ export default function BulkImport() {
                           Class
                         </th>
                         <th className="text-left p-2 font-medium text-gray-900 dark:text-white">
-                          Enrollment No
+                          SubClass
                         </th>
                       </tr>
                     </thead>
@@ -563,9 +522,6 @@ export default function BulkImport() {
                             {row.name}
                           </td>
                           <td className="p-2 text-gray-900 dark:text-white">
-                            {row.grNo}
-                          </td>
-                          <td className="p-2 text-gray-900 dark:text-white">
                             {row.rollNo}
                           </td>
                           <td className="p-2 text-gray-900 dark:text-white">
@@ -574,12 +530,8 @@ export default function BulkImport() {
                           <td className="p-2 text-gray-900 dark:text-white">
                             {row.class}
                           </td>
-                          <td className="p-2 text-gray-900 dark:text-white font-mono text-sm bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded">
-                            {row.enrollmentNo ||
-                              generateEnrollmentNo(
-                                row.standard,
-                                Number.parseInt(row.rollNo)
-                              )}
+                          <td className="p-2 text-gray-900 dark:text-white">
+                            {row.subclass}
                           </td>
                         </tr>
                       ))}

@@ -2,9 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
-import jwt from "jsonwebtoken";
-import prisma from "@/lib/prisma"; // Declare the prisma variable
+import prisma  from "../prisma"; // Declare the prisma variable
 import { comparePassword } from "@/utils/password";
 import { createSession } from "../session";
 
@@ -18,7 +16,7 @@ export async function login(formData: FormData) {
 
   const user = await prisma.teacher.findUnique({
     where: {
-      username,
+      email: username,
     },
   });
 
@@ -41,6 +39,42 @@ export async function login(formData: FormData) {
   const userId = user.id;
 
   await createSession(userId, user.role);
+}
+
+export async function faceLogin(teacherId: string) {
+  console.log("🔐 Face login action called for teacher:", teacherId);
+
+  if (!teacherId) {
+    return {
+      success: false,
+      message: "Teacher ID is required",
+    };
+  }
+
+  const teacher = await prisma.teacher.findUnique({
+    where: {
+      id: teacherId,
+    },
+  });
+
+  if (!teacher) {
+    console.error("❌ Teacher not found:", teacherId);
+    return {
+      success: false,
+      message: "Teacher not found",
+    };
+  }
+
+  console.log("✅ Teacher found:", teacher.name);
+
+  // Create session (same as email/password login)
+  await createSession(teacher.id, teacher.role);
+
+  console.log("✅ Session created for face login");
+
+  return {
+    success: true,
+  };
 }
 
 export async function logout() {

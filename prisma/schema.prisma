@@ -1,23 +1,24 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model Teacher {
-  id          String              @id @default(cuid())
-  username    String              @unique
-  password    String
-  name        String
-  email       String              @unique
-  role        TeacherRole         @default(TEACHER)
-  status      Status              @default(ACTIVE)
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
- 
+  id        String      @id @default(cuid())
+  username  String      @unique
+  password  String
+  name      String
+  email     String      @unique
+  role      TeacherRole @default(TEACHER)
+  status    Status      @default(ACTIVE)
+  Isface    Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
   assignments TeacherAssignment[]
   tests       Test[]
 
@@ -27,18 +28,17 @@ model Teacher {
 }
 
 model Student {
-  id           String             @id @default(cuid())
-  rollNo       Int
-  name         String
-  status       Status             @default(ACTIVE)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  class        String
-  standard     String
-  enrollmentNo String
-  grNo         String             @unique
-  attendance   AttendanceRecord[]
-  marks        Mark[]
+  id         Int                @id @default(autoincrement())
+  rollNo     Int
+  name       String
+  status     Status             @default(ACTIVE)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  class      String
+  standard   String
+  subClass   String?
+  attendance AttendanceRecord[]
+  marks      Mark[]
 
   @@unique([rollNo, standard, class])
   @@index([class, standard])
@@ -48,20 +48,21 @@ model Student {
 }
 
 model Test {
-  id        String     @id @default(cuid())
-  name      String
-  teacherId String
-  date      DateTime   @db.Date
-  maxMarks  Int
-  status    TestStatus @default(PENDING)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  subject   String
-  class     String
-  standard  String
-  examType  String
-  marks     Mark[]
-  teacher   Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  name        String
+  teacherId   String
+  date        DateTime   @db.Date
+  maxMarks    Int
+  status      TestStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  subject     String
+  class       String
+  standard    String
+  examType    String
+  testGroupId String? // Links same test across different classes
+  marks       Mark[]
+  teacher     Teacher    @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@index([teacherId])
   @@index([date])
@@ -70,11 +71,12 @@ model Test {
   @@index([teacherId, status])
   @@index([class, standard, date])
   @@index([subject, class, standard])
+  @@index([testGroupId])
 }
 
 model Mark {
-  id        String   @id @default(cuid())
-  studentId String
+  id        Int      @id @default(autoincrement())
+  studentId Int
   testId    String
   marks     Float
   grade     String?
@@ -94,7 +96,7 @@ model Mark {
 }
 
 model Attendance {
-  id        String             @id @default(cuid())
+  id        Int                @id @default(autoincrement())
   date      DateTime           @db.Date
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
@@ -109,9 +111,9 @@ model Attendance {
 }
 
 model AttendanceRecord {
-  id           String     @id @default(cuid())
-  attendanceId String
-  studentId    String
+  id           Int        @id @default(autoincrement())
+  attendanceId Int
+  studentId    Int
   isPresent    Boolean
   reason       String?    @default("")
   attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
@@ -125,7 +127,7 @@ model AttendanceRecord {
 }
 
 model TeacherAssignment {
-  id           String   @id @default(cuid())
+  id           Int      @id @default(autoincrement())
   teacherId    String
   standardNo   String
   standardName String
@@ -143,7 +145,7 @@ model TeacherAssignment {
 }
 
 model Holiday {
-  id        String   @id @default(cuid())
+  id        Int      @id @default(autoincrement())
   date      DateTime @unique @db.Date
   name      String
   createdAt DateTime @default(now())

@@ -28,11 +28,11 @@ export default function DeleteTeacher({
 
   return (
     <Button
-      size="sm"
+      size="icon"
       variant="ghost"
       onClick={handleDelete}
       disabled={isPending}
-      className="text-red-400 hover:bg-red-500/20"
+      className="h-9 w-9 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
     >
       {isPending ? (
         <Loader2 className="h-4 w-4 animate-spin" />

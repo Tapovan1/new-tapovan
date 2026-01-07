@@ -5,24 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getUser } from "./getUser";
 import { isValidStandardClassCombination } from "@/lib/constants/index";
 
-// Helper function to generate enrollment number
-function generateEnrollmentNo(standard: string, rollNo: number): string {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2); // Get last 2 digits of year (e.g., "25" for 2025)
 
-  // Convert standard to 2-digit format
-  let standardCode = "00";
-
-  const stdNum = Number.parseInt(standard);
-  if (!isNaN(stdNum)) {
-    standardCode = stdNum.toString().padStart(2, "0"); // Std 1 = 02, Std 2 = 03, etc.
-  }
-
-  // Format roll number to 4 digits
-  const rollNoFormatted = rollNo.toString().padStart(4, "0");
-
-  return `${yearSuffix}${standardCode}${rollNoFormatted}`;
-}
 
 // Helper function to get next roll number for a class
 async function getNextRollNo(
@@ -60,16 +43,20 @@ export async function createStudent(formData: FormData) {
   }
 
   try {
-    const grNo = formData.get("grNo") as string;
     const name = formData.get("name") as string;
-
     const standard = formData.get("standard") as string;
     const className = formData.get("class") as string;
-    const customRollNo = formData.get("rollNo") as string;
+    const rollNoStr = formData.get("rollNo") as string;
+    
 
     // Validate required fields
-    if (!grNo || !name || !standard || !className) {
-      return { error: "All fields are required" };
+    if (!name || !standard || !className || !rollNoStr) {
+      return { error: "Name, standard, class, and roll number are required" };
+    }
+
+    const rollNo = Number.parseInt(rollNoStr);
+    if (isNaN(rollNo)) {
+      return { error: "Invalid roll number" };
     }
 
     // Validate standard-class combination
@@ -79,53 +66,24 @@ export async function createStudent(formData: FormData) {
       };
     }
 
-    // Check if GR Number already exists
-    const existingGrNo = await prisma.student.findUnique({
-      where: { grNo },
+    // Check if this roll number already exists in the same class
+    const existingRollNo = await prisma.student.findFirst({
+      where: {
+        rollNo:Number(rollNoStr),
+        standard,
+        class: className,
+      },
     });
-    if (existingGrNo) {
-      return { error: "GR Number already exists" };
-    }
+    console.log("existingRollNo", existingRollNo);
 
-    // Determine roll number
-    let rollNo: number;
-    if (customRollNo && !isNaN(Number.parseInt(customRollNo))) {
-      rollNo = Number.parseInt(customRollNo);
-
-      // Check if this roll number already exists in the same class
-      const existingRollNo = await prisma.student.findFirst({
-        where: {
-          rollNo,
-          standard,
-          class: className,
-        },
-      });
-      if (existingRollNo) {
-        return { error: `Roll number ${rollNo} already exists in this class` };
-      }
-    } else {
-      // Auto-generate next roll number
-      rollNo = await getNextRollNo(standard, className);
-    }
-
-    // Generate enrollment number
-    const enrollmentNo = generateEnrollmentNo(standard, rollNo);
-
-    // Check if enrollment number already exists (shouldn't happen, but safety check)
-    const existingEnrollment = await prisma.student.findFirst({
-      where: { enrollmentNo },
-    });
-    if (existingEnrollment) {
-      return { error: "Enrollment number conflict. Please try again." };
+    if (existingRollNo) {
+      return { error: `Roll number ${rollNo} already exists in this class` };
     }
 
     const student = await prisma.student.create({
       data: {
-        grNo,
-        enrollmentNo,
-        rollNo,
+        rollNo:Number(rollNoStr),
         name,
-
         standard,
         class: className,
       },
@@ -146,10 +104,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
   }
 
   try {
-    const grNo = formData.get("grNo") as string;
     const name = formData.get("name") as string;
-    const parentName = formData.get("parentName") as string;
-    const parentPhone = formData.get("parentPhone") as string;
     const standard = formData.get("standard") as string;
     const className = formData.get("class") as string;
     const rollNoStr = formData.get("rollNo") as string;
@@ -172,15 +127,7 @@ export async function updateStudent(studentId: string, formData: FormData) {
       return { error: "Student not found" };
     }
 
-    // Check if GR Number is being changed and if it already exists
-    if (grNo !== currentStudent.grNo) {
-      const existingGrNo = await prisma.student.findUnique({
-        where: { grNo },
-      });
-      if (existingGrNo) {
-        return { error: "GR Number already exists" };
-      }
-    }
+
 
     // Check if roll number is being changed and if it conflicts
     if (
@@ -201,34 +148,13 @@ export async function updateStudent(studentId: string, formData: FormData) {
       }
     }
 
-    // Generate new enrollment number if standard or roll number changed
-    let enrollmentNo = currentStudent.enrollmentNo;
-    if (
-      standard !== currentStudent.standard ||
-      rollNo !== currentStudent.rollNo
-    ) {
-      enrollmentNo = generateEnrollmentNo(standard, rollNo);
 
-      // Check if new enrollment number conflicts
-      const existingEnrollment = await prisma.student.findFirst({
-        where: {
-          enrollmentNo,
-          id: { not: studentId },
-        },
-      });
-      if (existingEnrollment) {
-        return { error: "Enrollment number conflict. Please try again." };
-      }
-    }
 
     const student = await prisma.student.update({
       where: { id: studentId },
       data: {
-        grNo,
-        enrollmentNo,
         rollNo,
         name,
-
         standard,
         class: className,
         status: status || "ACTIVE",
@@ -278,10 +204,7 @@ export async function getStudentsByClass(standard: string, className: string) {
   return students;
 }
 
-// Helper function to get enrollment number preview
-export async function getEnrollmentPreview(standard: string, rollNo: number) {
-  return generateEnrollmentNo(standard, rollNo);
-}
+
 
 // Get students by standard (for filtering)
 export async function getStudentsByStandard(standard: string) {
@@ -333,7 +256,7 @@ export async function bulkCreateStudents(studentsData: any[]) {
     const results = [];
 
     for (const studentData of studentsData) {
-      const { grNo, name, enrollmentNo, standard, className } = studentData;
+      const {id, name, standard, className, rollNo, subclass } = studentData;
 
       // Validate standard-class combination
       if (!isValidStandardClassCombination(standard, className)) {
@@ -343,27 +266,30 @@ export async function bulkCreateStudents(studentsData: any[]) {
         continue;
       }
 
-      // Check if GR Number already exists
-      const existingGrNo = await prisma.student.findUnique({
-        where: { grNo },
-      });
-      if (existingGrNo) {
-        results.push({ error: `GR Number ${grNo} already exists` });
-        continue;
-      }
+      // // Check if roll number already exists in the same class
+      // const existingRollNo = await prisma.student.findFirst({
+      //   where: {
 
-      // Auto-generate roll number
-      const rollNo = await getNextRollNo(standard, className);
+      //     rollNo,
+      //     standard,
+      //     class: className,
+      //   },
+      // });
+      // if (existingRollNo) {
+      //   results.push({
+      //     error: `Roll number ${rollNo} already exists in ${standard}-${className}`,
+      //   });
+      //   continue;
+      // }
 
       const student = await prisma.student.create({
         data: {
-          grNo,
-          enrollmentNo,
+          id:Number(id),
           rollNo,
           name,
-
           standard,
           class: className,
+          subClass: subclass,
         },
       });
 

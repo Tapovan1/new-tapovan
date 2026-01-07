@@ -27,18 +27,33 @@ export async function getAttendanceReport(
       },
     });
 
-    // Get attendance records for the month
+    // Get student IDs for the query
+    const studentIds = students.map((student) => student.id);
+
+    // Get attendance records for the month - fetch by student IDs to include historical records
+    // even if the student was in a different class when attendance was marked
     const attendanceRecords = await prisma.attendance.findMany({
       where: {
-        standard,
-        class: className,
         date: {
           gte: startDate,
           lte: endDate,
         },
+        records: {
+          some: {
+            studentId: {
+              in: studentIds,
+            },
+          },
+        },
       },
       include: {
-        records: true,
+        records: {
+          where: {
+            studentId: {
+              in: studentIds,
+            },
+          },
+        },
       },
     });
 
@@ -97,7 +112,6 @@ export async function getAttendanceReport(
         studentId: student.id,
         rollNo: student.rollNo,
         name: student.name,
-        grNo: student.grNo,
         attendanceData: studentAttendance,
         totalPresent,
         totalDays,

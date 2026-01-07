@@ -48,7 +48,6 @@ export async function getStudentsByClass(standard: string, className: string) {
       id: true,
       name: true,
       rollNo: true,
-      grNo: true,
     },
     orderBy: { rollNo: "asc" },
   });

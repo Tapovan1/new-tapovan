@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -54,6 +54,7 @@ import {
   deleteHoliday,
 } from "@/lib/actions/holiday.action";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Holiday {
   id: string;
@@ -75,12 +76,19 @@ export default function HolidayManagementClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingHoliday, setEditingHoliday] = useState<Holiday | null>(null);
+  const router = useRouter();
 
   // Form states
   const [formData, setFormData] = useState({
     date: "",
     name: "",
   });
+
+  // Sync with prop changes after router.refresh()
+  useEffect(() => {
+    setHolidays(initialHolidays);
+    setFilteredHolidays(initialHolidays);
+  }, [initialHolidays]);
 
   // Filter holidays based on search
   const handleSearch = (term: string) => {
@@ -110,8 +118,12 @@ export default function HolidayManagementClient({
     const result = await addHoliday(formData.date, formData.name);
 
     if (result.success) {
-      // Refresh the page to get updated data
-      window.location.reload();
+      setIsAddDialogOpen(false);
+      resetForm();
+      // Refresh server data without full page reload
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
     } else {
       alert(result.error);
     }
@@ -128,7 +140,11 @@ export default function HolidayManagementClient({
     );
 
     if (result.success) {
-      window.location.reload();
+      resetForm();
+      // Refresh server data without full page reload
+      setTimeout(() => {
+        router.refresh();
+      }, 100);
     } else {
       alert(result.error);
     }
@@ -139,7 +155,8 @@ export default function HolidayManagementClient({
     const result = await deleteHoliday(id);
 
     if (result.success) {
-      window.location.reload();
+      // Refresh server data without full page reload
+      router.refresh();
     } else {
       alert(result.error);
     }
@@ -155,15 +172,15 @@ export default function HolidayManagementClient({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 sm:px-6 py-4">
+      <div className="bg-card border-b border-border px-4 sm:px-6 py-4">
         <div className="flex items-center gap-4">
           <Link href="/admin/dashboard">
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-300 hover:bg-slate-800"
+              className="text-muted-foreground hover:bg-muted"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -174,10 +191,10 @@ export default function HolidayManagementClient({
               <CalendarDays className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-xl font-bold text-white">
+              <h1 className="text-lg sm:text-xl font-bold text-foreground">
                 Holiday Management
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Manage school holidays and events
               </p>
             </div>
@@ -189,16 +206,16 @@ export default function HolidayManagementClient({
         {/* Statistics */}
 
         {/* Search and Add */}
-        <Card className="bg-slate-900/50 border-slate-800 mb-6">
+        <Card className="bg-card border-border mb-6">
           <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
               <div className="flex-1 relative w-full sm:max-w-md">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search holidays..."
                   value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
-                  className="bg-slate-800/50 border-slate-700 text-white pl-10"
+                  className="bg-background/50 border-border text-foreground pl-10"
                 />
               </div>
 
@@ -210,41 +227,41 @@ export default function HolidayManagementClient({
                 }}
               >
                 <DialogTrigger asChild>
-                  <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+                  <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Holiday
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
+                <DialogContent className="bg-card border-border max-w-md">
                   <DialogHeader>
-                    <DialogTitle className="text-white">
+                    <DialogTitle className="text-foreground">
                       Add New Holiday
                     </DialogTitle>
-                    <DialogDescription className="text-slate-400">
+                    <DialogDescription className="text-muted-foreground">
                       Create a new holiday entry for the school calendar
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-200">Date</Label>
+                      <Label className="text-foreground">Date</Label>
                       <Input
                         type="date"
                         value={formData.date}
                         onChange={(e) =>
                           setFormData({ ...formData, date: e.target.value })
                         }
-                        className="bg-slate-700/50 border-slate-600 text-white"
+                        className="bg-background/50 border-border text-foreground"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-200">Holiday Name</Label>
+                      <Label className="text-foreground">Holiday Name</Label>
                       <Input
                         placeholder="Enter holiday name"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        className="bg-slate-700/50 border-slate-600 text-white"
+                        className="bg-background/50 border-border text-foreground"
                       />
                     </div>
 
@@ -252,13 +269,13 @@ export default function HolidayManagementClient({
                       <Button
                         variant="outline"
                         onClick={() => setIsAddDialogOpen(false)}
-                        className="border-slate-600 text-slate-300"
+                        className="border-border text-foreground"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleAddHoliday}
-                        className="bg-gradient-to-r from-green-500 to-emerald-500"
+                        className="bg-gradient-to-r from-green-500 to-emerald-500 text-white"
                         disabled={!formData.date || !formData.name}
                       >
                         Add Holiday
@@ -272,24 +289,24 @@ export default function HolidayManagementClient({
         </Card>
 
         {/* Holidays List */}
-        <Card className="bg-slate-900/50 border-slate-800">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
+            <CardTitle className="text-foreground flex items-center gap-2">
               <Calendar className="h-5 w-5" />
               Holidays Calendar
             </CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-muted-foreground">
               {filteredHolidays.length} holidays found
             </CardDescription>
           </CardHeader>
           <CardContent>
             {filteredHolidays.length === 0 ? (
               <div className="text-center py-12">
-                <Calendar className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-                <h3 className="text-white font-medium mb-2">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-foreground font-medium mb-2">
                   No Holidays Found
                 </h3>
-                <p className="text-slate-400">
+                <p className="text-muted-foreground">
                   {searchTerm
                     ? `No holidays match "${searchTerm}"`
                     : "No holidays have been added yet"}
@@ -300,15 +317,15 @@ export default function HolidayManagementClient({
                 {filteredHolidays.map((holiday) => (
                   <div
                     key={holiday.id}
-                    className="flex items-center justify-between p-4 bg-slate-800/30 rounded-lg hover:bg-slate-800/50 transition-colors"
+                    className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors border border-border/50"
                   >
                     <div className="flex items-center gap-4">
                       <div>
-                        <h4 className="text-white font-medium">
+                        <h4 className="text-foreground font-medium">
                           {holiday.name}
                         </h4>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-slate-400 text-sm">
+                          <span className="text-muted-foreground text-sm">
                             {new Date(holiday.date).toLocaleDateString(
                               "en-US",
                               {
@@ -328,24 +345,24 @@ export default function HolidayManagementClient({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-blue-400 hover:bg-blue-500/20"
+                            className="text-blue-500 dark:text-blue-400 hover:bg-blue-500/20"
                             onClick={() => openEditDialog(holiday)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </DialogTrigger>
-                        <DialogContent className="bg-slate-800 border-slate-700 max-w-md">
+                        <DialogContent className="bg-card border-border max-w-md">
                           <DialogHeader>
-                            <DialogTitle className="text-white">
+                            <DialogTitle className="text-foreground">
                               Edit Holiday
                             </DialogTitle>
-                            <DialogDescription className="text-slate-400">
+                            <DialogDescription className="text-muted-foreground">
                               Update holiday information
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div className="space-y-2">
-                              <Label className="text-slate-200">Date</Label>
+                              <Label className="text-foreground">Date</Label>
                               <Input
                                 type="date"
                                 value={formData.date}
@@ -355,11 +372,11 @@ export default function HolidayManagementClient({
                                     date: e.target.value,
                                   })
                                 }
-                                className="bg-slate-700/50 border-slate-600 text-white"
+                                className="bg-background/50 border-border text-foreground"
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label className="text-slate-200">
+                              <Label className="text-foreground">
                                 Holiday Name
                               </Label>
                               <Input
@@ -371,20 +388,20 @@ export default function HolidayManagementClient({
                                     name: e.target.value,
                                   })
                                 }
-                                className="bg-slate-700/50 border-slate-600 text-white"
+                                className="bg-background/50 border-border text-foreground"
                               />
                             </div>
 
                             <div className="flex justify-end gap-2 mt-6">
                               <Button
                                 variant="outline"
-                                className="border-slate-600 text-slate-300 bg-transparent"
+                                className="border-border text-foreground"
                               >
                                 Cancel
                               </Button>
                               <Button
                                 onClick={handleEditHoliday}
-                                className="bg-gradient-to-r from-blue-500 to-indigo-500"
+                                className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white"
                                 disabled={!formData.date || !formData.name}
                               >
                                 Update Holiday
@@ -399,28 +416,28 @@ export default function HolidayManagementClient({
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-red-400 hover:bg-red-500/20"
+                            className="text-red-500 dark:text-red-400 hover:bg-red-500/20"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="bg-slate-800 border-slate-700">
+                        <AlertDialogContent className="bg-card border-border">
                           <AlertDialogHeader>
-                            <AlertDialogTitle className="text-white">
+                            <AlertDialogTitle className="text-foreground">
                               Delete Holiday
                             </AlertDialogTitle>
-                            <AlertDialogDescription className="text-slate-400">
+                            <AlertDialogDescription className="text-muted-foreground">
                               Are you sure you want to delete "{holiday.name}"?
                               This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel className="border-slate-600 text-slate-300">
+                            <AlertDialogCancel className="border-border text-foreground">
                               Cancel
                             </AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => handleDeleteHoliday(holiday.id)}
-                              className="bg-red-600 hover:bg-red-700"
+                              className="bg-red-600 hover:bg-red-700 text-white"
                             >
                               Delete
                             </AlertDialogAction>

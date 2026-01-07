@@ -7,7 +7,6 @@ export interface StudentTestData {
   studentId: string;
   rollNo: number;
   name: string;
-  grNo: string;
   marks: { [testId: string]: number | null };
 }
 
@@ -101,7 +100,6 @@ export async function getSelectedTestsDataForExcel(
         studentId: student.id,
         rollNo: student.rollNo,
         name: student.name,
-        grNo: student.grNo,
         marks: studentMarks,
       };
     });

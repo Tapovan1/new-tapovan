@@ -37,14 +37,15 @@ import {
   Loader2,
   GraduationCap,
   FileSpreadsheet,
+  ArrowRightLeft,
 } from "lucide-react";
 import {
   createStudent,
   updateStudent,
   deleteStudent,
-  getEnrollmentPreview,
   getStudentsByStandardAndClass,
 } from "@/lib/actions/student.action";
+import { transferStudent } from "@/lib/actions/transfer-student.action";
 import {
   getStandardsList,
   getClassesForStandard,
@@ -67,11 +68,17 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferringStudent, setTransferringStudent] = useState<any>(null);
+  const [transferStandard, setTransferStandard] = useState<StandardKey | "">("");
+  const [transferClass, setTransferClass] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [isTransferring, setIsTransferring] = useState(false);
   const [loadingStandards, setLoadingStandards] = useState<
     Record<string, boolean>
   >({});
-  const [enrollmentPreview, setEnrollmentPreview] = useState("");
   const [selectedStandard, setSelectedStandard] = useState<StandardKey | "">(
     ""
   );
@@ -97,19 +104,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
     }
   }, [selectedStandard]);
 
-  // Update enrollment preview when standard or roll number changes
-  useEffect(() => {
-    if (selectedStandard && rollNoInput) {
-      const rollNo = Number.parseInt(rollNoInput);
-      if (!isNaN(rollNo)) {
-        getEnrollmentPreview(selectedStandard, rollNo).then(
-          setEnrollmentPreview
-        );
-      }
-    } else {
-      setEnrollmentPreview("");
-    }
-  }, [selectedStandard, rollNoInput]);
+
 
   // Fetch students for a specific standard and class
   const fetchStudentsForClass = async (standard: string, className: string) => {
@@ -161,14 +156,13 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
   };
 
   const handleCreate = async (formData: FormData) => {
-    setLoading(true);
+    setIsCreating(true);
     try {
       const result = await createStudent(formData);
       if (result.success) {
         setIsCreateOpen(false);
         setSelectedStandard("");
         setRollNoInput("");
-        setEnrollmentPreview("");
         setAvailableClasses([]);
         // Refresh the students data for the added class
         const standard = formData.get("standard") as string;
@@ -180,14 +174,14 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
     } catch (error) {
       alert("Failed to create student");
     } finally {
-      setLoading(false);
+      setIsCreating(false);
     }
   };
 
   const handleUpdate = async (formData: FormData) => {
     if (!editingStudent) return;
 
-    setLoading(true);
+    setIsUpdating(true);
     try {
       const result = await updateStudent(editingStudent.id, formData);
       if (result.success) {
@@ -203,7 +197,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
     } catch (error) {
       alert("Failed to update student");
     } finally {
-      setLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -226,6 +220,48 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
       alert("Failed to delete student");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTransfer = async () => {
+    if (!transferringStudent || !transferStandard || !transferClass) {
+      alert("Please select both standard and class");
+      return;
+    }
+
+    setIsTransferring(true);
+    try {
+      const result = await transferStudent(
+        transferringStudent.id,
+        transferStandard,
+        transferClass
+      );
+
+      if (result.success) {
+        setIsTransferOpen(false);
+        setTransferringStudent(null);
+        setTransferStandard("");
+        setTransferClass("");
+        
+        // Refresh both old and new classes
+        await fetchStudentsForClass(
+          transferringStudent.standard,
+          transferringStudent.class
+        );
+        await fetchStudentsForClass(transferStandard, transferClass);
+
+        // Show transfer results
+        const details = result.details?.join("\n") || "";
+        alert(
+          `${result.message}\n\nMarks Transferred: ${result.marksTransferred}\nMarks Failed: ${result.marksFailed}\n\n${details}`
+        );
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      alert("Failed to transfer student");
+    } finally {
+      setIsTransferring(false);
     }
   };
 
@@ -407,16 +443,19 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                           auto-generated.
                         </DialogDescription>
                       </DialogHeader>
-                      <form action={handleCreate} className="space-y-6">
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        handleCreate(formData);
+                      }} className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label>GR Number *</Label>
+                          {/* <div className="space-y-2">
+                            <Label>GR Number (Optional)</Label>
                             <Input
                               name="grNo"
-                              placeholder="e.g., GR001"
-                              required
+                              placeholder="e.g., GR001 (optional)"
                             />
-                          </div>
+                          </div> */}
                           <div className="space-y-2">
                             <Label>Standard *</Label>
                             <Select
@@ -425,7 +464,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                               onValueChange={(value) =>
                                 setSelectedStandard(value as StandardKey)
                               }
-                              defaultValue=""
+                              defaultValue={standard}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select Standard" />
@@ -443,7 +482,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4">
                           <div className="space-y-2">
                             <Label>Roll Number</Label>
                             <Input
@@ -454,14 +493,6 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                               onChange={(e) => setRollNoInput(e.target.value)}
                             />
                           </div>
-                          <div className="space-y-2">
-                            <Label>Enrollment Number</Label>
-                            <div className="bg-muted/50 border rounded-md px-3 py-2">
-                              <span className="text-muted-foreground">
-                                {enrollmentPreview || "Auto-generated"}
-                              </span>
-                            </div>
-                          </div>
                         </div>
 
                         <div className="space-y-2">
@@ -471,7 +502,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
 
                         <div className="space-y-2">
                           <Label>Class *</Label>
-                          <Select name="class" required>
+                          <Select name="class" required defaultValue={activeClass || ""}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select Class" />
                             </SelectTrigger>
@@ -495,20 +526,19 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                               setIsCreateOpen(false);
                               setSelectedStandard("");
                               setRollNoInput("");
-                              setEnrollmentPreview("");
                             }}
                           >
                             Cancel
                           </Button>
                           <Button
                             type="submit"
-                            disabled={loading}
+                            disabled={isCreating}
                             className="gap-2"
                           >
-                            {loading && (
+                            {isCreating && (
                               <Loader2 className="h-4 w-4 animate-spin" />
                             )}
-                            Add Student
+                            {isCreating ? "Adding..." : "Add Student"}
                           </Button>
                         </div>
                       </form>
@@ -600,12 +630,6 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                                         />
                                       </TableHead>
                                       <TableHead className="font-semibold">
-                                        GR No
-                                      </TableHead>
-                                      <TableHead className="font-semibold">
-                                        Enrollment No
-                                      </TableHead>
-                                      <TableHead className="font-semibold">
                                         Roll No
                                       </TableHead>
                                       <TableHead className="font-semibold">
@@ -636,19 +660,13 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                                           />
                                         </TableCell>
                                         <TableCell className="font-medium">
-                                          {student.grNo}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
-                                          {student.enrollmentNo}
-                                        </TableCell>
-                                        <TableCell className="font-medium">
                                           {student.rollNo}
                                         </TableCell>
                                         <TableCell className="font-medium">
                                           {student.name}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                          <div className="flex items-center justify-end gap-2">
+                                          <div className="flex gap-2 justify-end">
                                             <Button
                                               variant="outline"
                                               size="sm"
@@ -658,6 +676,18 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                                               }}
                                             >
                                               Edit
+                                            </Button>
+                                            <Button
+                                              variant="secondary"
+                                              size="sm"
+                                              onClick={() => {
+                                                setTransferringStudent(student);
+                                                setTransferStandard(student.standard as StandardKey);
+                                                setIsTransferOpen(true);
+                                              }}
+                                            >
+                                              <ArrowRightLeft className="h-4 w-4 mr-1" />
+                                              Transfer
                                             </Button>
                                             <Button
                                               variant="destructive"
@@ -731,14 +761,18 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                 regenerated if needed.
               </DialogDescription>
             </DialogHeader>
-            <form action={handleUpdate} className="space-y-6">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              handleUpdate(formData);
+            }} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>GR Number *</Label>
+                  <Label>GR Number (Optional)</Label>
                   <Input
                     name="grNo"
-                    defaultValue={editingStudent?.grNo}
-                    required
+                    defaultValue={editingStudent?.grNo || ""}
+                    placeholder="e.g., GR001 (optional)"
                   />
                 </div>
                 <div className="space-y-2">
@@ -764,7 +798,7 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label>Roll Number *</Label>
                   <Input
@@ -773,14 +807,6 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                     defaultValue={editingStudent?.rollNo}
                     required
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Current Enrollment No</Label>
-                  <div className="bg-muted/50 border rounded-md px-3 py-2">
-                    <span className="text-muted-foreground">
-                      {editingStudent?.enrollmentNo}
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -843,12 +869,109 @@ export default function StudentsClient({ admin }: StudentsClientProps) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} className="gap-2">
-                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Update Student
+                <Button type="submit" disabled={isUpdating} className="gap-2">
+                  {isUpdating && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isUpdating ? "Updating..." : "Update Student"}
                 </Button>
               </div>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Transfer Dialog */}
+        <Dialog open={isTransferOpen} onOpenChange={setIsTransferOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Transfer Student</DialogTitle>
+              <DialogDescription>
+                Transfer {transferringStudent?.name} to a new class. Marks will be
+                automatically migrated if matching tests exist.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Current Location</Label>
+                <div className="text-sm text-muted-foreground">
+                  Standard {transferringStudent?.standard}, Class{" "}
+                  {transferringStudent?.class}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>New Standard *</Label>
+                <Select
+                  value={transferStandard}
+                  onValueChange={(value) =>
+                    setTransferStandard(value as StandardKey)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Standard" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standardsList.map((std) => (
+                      <SelectItem key={std} value={std}>
+                        {std === "KG1" || std === "KG2"
+                          ? std
+                          : `Standard ${std}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>New Class *</Label>
+                <Select
+                  value={transferClass}
+                  onValueChange={setTransferClass}
+                  disabled={!transferStandard}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transferStandard &&
+                      getClassesForStandard(transferStandard).map((cls) => (
+                        <SelectItem key={cls} value={cls}>
+                          {cls}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsTransferOpen(false);
+                    setTransferringStudent(null);
+                    setTransferStandard("");
+                    setTransferClass("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleTransfer}
+                  disabled={isTransferring || !transferStandard || !transferClass}
+                  className="gap-2"
+                >
+                  {isTransferring ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Transferring...
+                    </>
+                  ) : (
+                    <>
+                      <ArrowRightLeft className="h-4 w-4" />
+                      Transfer Student
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

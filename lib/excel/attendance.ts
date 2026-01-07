@@ -54,7 +54,7 @@ export async function exportAttendanceToExcel(
   };
 
   // Build headers
-  const headers = ["Roll No", "Student Name", "GR No"];
+  const headers = ["Roll No", "Student Name"];
   dayNumbers.forEach((day) => headers.push(day.toString()));
   headers.push("Present", "Total Days", "Percentage");
 
@@ -116,8 +116,7 @@ export async function exportAttendanceToExcel(
   attendanceData.forEach((student, index) => {
     const row: (string | number)[] = [
       student.rollNo,
-      student.name,
-      student.grNo,
+      student.name
     ];
 
     // Add attendance data for each day
@@ -277,9 +276,9 @@ export async function exportAttendanceToExcel(
   });
 
   // Set column widths
-  const columnWidths = [8, 25, 12]; // Roll No, Name, GR No
+  const columnWidths = [8, 25]; // Roll No, Name, GR No
   dayNumbers.forEach(() => columnWidths.push(4)); // Day columns
-  columnWidths.push(8, 10, 10); // Present, Total Days, Percentage
+  columnWidths.push(8, 15, 15); // Present, Total Days, Percentage
 
   worksheet.columns.forEach((column, index) => {
     column.width = columnWidths[index] || 10;

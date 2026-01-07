@@ -65,7 +65,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       icon: UserCheck,
     },
     {
-      name: "Teacher Assignment",
+      name: "Teacher Assign",
       href: "/admin/teacher-assignment",
       icon: ClipboardList,
     },
@@ -90,6 +90,11 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
       href: "/admin/Holiday",
       icon: Calendar,
     },
+    // {
+    //   name:"Face-Verify",
+    //   href:"/face-verify",
+    //   icon:Calendar,
+    // }
   ];
 
   // Teacher navigation items

@@ -1,5 +1,6 @@
 import LoginForm from "./Form";
-import { login } from "@/lib/actions/auth.action";
+import { login, faceLogin } from "@/lib/actions/auth.action";
+import FaceLoginDialog from "./Face-Login-Dialog";
 
 export default function LoginPage() {
   async function loginAction(prevState: unknown, formData: FormData) {
@@ -12,6 +13,14 @@ export default function LoginPage() {
       error: "Login Failed. Please check your credentials and Try again",
       success: false,
     };
+  }
+
+  async function faceLoginAction(teacherId: string) {
+    "use server";
+    const result = await faceLogin(teacherId);
+    if (!result.success) {
+      throw new Error(result.message || "Face login failed");
+    }
   }
 
   return (
@@ -36,6 +45,21 @@ export default function LoginPage() {
           </div>
 
           <LoginForm loginAction={loginAction} />
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-300 dark:border-gray-600"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white dark:bg-gray-800 text-slate-500 dark:text-gray-400 font-medium">
+                OR
+              </span>
+            </div>
+          </div>
+
+          {/* Face Authentication */}
+          <FaceLoginDialog onSuccess={faceLoginAction} />
         </div>
 
         {/* Footer */}

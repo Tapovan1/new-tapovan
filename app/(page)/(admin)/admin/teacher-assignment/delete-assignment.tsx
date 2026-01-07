@@ -4,6 +4,7 @@ import { useTransition } from "react"
 import { Button } from "@/components/ui/button"
 import { Trash2, Loader2 } from "lucide-react"
 import { deleteAssignment } from "@/lib/actions/teacher-assignment.action"
+import { useRouter } from "next/navigation"
 
 interface DeleteAssignmentProps {
   assignmentId: string
@@ -12,6 +13,7 @@ interface DeleteAssignmentProps {
 
 export default function DeleteAssignment({ assignmentId, assignmentDetails }: DeleteAssignmentProps) {
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
 
   const handleDelete = async () => {
     if (!confirm(`Are you sure you want to delete this assignment: ${assignmentDetails}?`)) {
@@ -21,7 +23,8 @@ export default function DeleteAssignment({ assignmentId, assignmentDetails }: De
     startTransition(async () => {
       const result = await deleteAssignment(assignmentId)
       if (result.success) {
-        window.location.reload()
+        // Refresh server data without full page reload
+        router.refresh()
       } else {
         alert(result.error || "Failed to delete assignment")
       }

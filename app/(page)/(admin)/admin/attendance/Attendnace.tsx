@@ -294,7 +294,7 @@ export default function AttendanceReportClient() {
       </div>
 
       <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {/* Statistics Cards - Only show after search */}
+        {/* Statistics Cards - Only show after search
         {hasSearched && attendanceData.length > 0 && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -353,7 +353,7 @@ export default function AttendanceReportClient() {
               </CardContent>
             </Card>
           </div>
-        )}
+        )} */}
 
         {/* Filters */}
         <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-sm border border-slate-200 dark:border-gray-600/30 shadow-lg">
