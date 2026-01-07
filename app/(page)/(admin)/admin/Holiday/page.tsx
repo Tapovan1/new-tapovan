@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { getAllHolidays } from "@/lib/actions/holiday.action";
 import HolidayManagementClient from "./Holiday-client";
 
