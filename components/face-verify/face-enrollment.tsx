@@ -287,22 +287,26 @@ export default function FaceEnrollment({ defaultTeacherId, onSuccess }: FaceEnro
                     />
                     <canvas ref={canvasRef} className="hidden" />
                     
-                    {/* Face Guide Overlay */}
+                    {/* Circular Face Guide - UIDAI Style */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="relative w-64 h-80">
-                        {/* Oval face guide */}
-                        <div className="absolute inset-0 border-4 border-green-500 rounded-full opacity-60" 
-                             style={{ borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%' }}>
+                      <div className="relative" style={{ width: '65%', aspectRatio: '1' }}>
+                        {/* Main circular guide - Red border like UIDAI */}
+                        <div className="absolute inset-0 rounded-full border-4 border-red-500 shadow-2xl">
                         </div>
-                        {/* Corner guides */}
-                        <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-green-400"></div>
-                        <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-green-400"></div>
-                        <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-green-400"></div>
-                        <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-green-400"></div>
+                        
+                        {/* Inner circle for better face positioning */}
+                        <div className="absolute inset-4 rounded-full border-2 border-red-400/50">
+                        </div>
+                        
+                        {/* Alignment markers - Top, Bottom, Left, Right */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
+                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-1 w-6 bg-green-400"></div>
                         
                         {/* Instruction text */}
                         <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg whitespace-nowrap">
-                          <p className="text-sm font-semibold">Align your face within the guide</p>
+                          <p className="text-sm font-semibold">POSITION YOUR FACE IN THE CENTRE</p>
                         </div>
                       </div>
                     </div>

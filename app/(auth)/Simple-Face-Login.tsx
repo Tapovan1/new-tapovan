@@ -304,16 +304,20 @@ export default function SimpleFaceLogin({ onSuccess }: SimpleFaceLoginProps) {
           
           {/* Circular Face Guide - UIDAI Style */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative" style={{ width: '70%', aspectRatio: '1' }}>
-              {/* Main circular guide */}
+            <div className="relative" style={{ width: '65%', aspectRatio: '1' }}>
+              {/* Main circular guide - Red border like UIDAI, turns green when blink detected */}
               <div className={`absolute inset-0 rounded-full border-4 shadow-2xl transition-colors duration-300 ${
-                blinkDetected ? 'border-green-400' : 'border-white/80'
-              }`}></div>
+                blinkDetected ? 'border-green-400' : 'border-red-500'
+              }`}>
+              </div>
               
-              {/* Inner circle for face positioning */}
-              <div className="absolute inset-4 rounded-full border-2 border-white/40"></div>
+              {/* Inner circle for better face positioning */}
+              <div className={`absolute inset-4 rounded-full border-2 transition-colors duration-300 ${
+                blinkDetected ? 'border-green-400/50' : 'border-red-400/50'
+              }`}>
+              </div>
               
-              {/* Corner markers */}
+              {/* Alignment markers - Top, Bottom, Left, Right */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
               <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
@@ -327,6 +331,13 @@ export default function SimpleFaceLogin({ onSuccess }: SimpleFaceLoginProps) {
                   </div>
                 </div>
               )}
+              
+              {/* Instruction text */}
+              <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+                <p className="text-sm font-semibold">
+                  {blinkDetected ? "FACE DETECTED" : "POSITION YOUR FACE IN THE CENTRE"}
+                </p>
+              </div>
             </div>
           </div>
           
