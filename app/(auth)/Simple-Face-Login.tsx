@@ -232,17 +232,55 @@ export default function SimpleFaceLogin({ onSuccess }: SimpleFaceLoginProps) {
       
       if (!context) throw new Error("Canvas context not available");
       
+      // Set canvas to video dimensions
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
+      
+      // Draw the full video frame first
       context.drawImage(video, 0, 0);
       
+      // Calculate circular crop dimensions (65% of width, centered)
+      const circleSize = Math.min(canvas.width, canvas.height) * 0.65;
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = circleSize / 2;
+      
+      // Create a new canvas for the circular crop
+      const cropCanvas = document.createElement('canvas');
+      const cropSize = circleSize;
+      cropCanvas.width = cropSize;
+      cropCanvas.height = cropSize;
+      const cropContext = cropCanvas.getContext('2d');
+      
+      if (!cropContext) throw new Error("Crop canvas context not available");
+      
+      // Draw circular clipping path
+      cropContext.beginPath();
+      cropContext.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, Math.PI * 2);
+      cropContext.closePath();
+      cropContext.clip();
+      
+      // Draw the cropped portion from the original canvas
+      cropContext.drawImage(
+        canvas,
+        centerX - radius,
+        centerY - radius,
+        circleSize,
+        circleSize,
+        0,
+        0,
+        cropSize,
+        cropSize
+      );
+      
+      // Convert circular crop to blob
       const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95);
+        cropCanvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.95);
       });
 
       if (!blob) throw new Error("Failed to capture image");
 
-      console.log("📸 Face image captured:", blob.size, "bytes");
+      console.log("📸 Circular face image captured:", blob.size, "bytes");
 
       // Verify face
       const formData = new FormData();
@@ -285,65 +323,76 @@ export default function SimpleFaceLogin({ onSuccess }: SimpleFaceLoginProps) {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      {/* Camera View */}
+      {/* Camera View - UIDAI Aadhaar Style (Only Circular Portion Visible) */}
       {status !== 'idle' && status !== 'complete' && (
-        <div className="relative mb-4">
+        <div className="relative mb-4 bg-white rounded-2xl p-8">
+          {/* Hidden video element */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full rounded-2xl bg-black object-cover"
-            style={{ 
-              aspectRatio: '4/3', 
-              transform: 'scaleX(-1) scale(1.5)',
-              transformOrigin: 'center center'
-            }}
+            className="hidden"
           />
           <canvas ref={canvasRef} className="hidden" />
           
-          {/* Circular Face Guide - UIDAI Style */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="relative" style={{ width: '65%', aspectRatio: '1' }}>
-              {/* Main circular guide - Red border like UIDAI, turns green when blink detected */}
-              <div className={`absolute inset-0 rounded-full border-4 shadow-2xl transition-colors duration-300 ${
-                blinkDetected ? 'border-green-400' : 'border-red-500'
-              }`}>
-              </div>
-              
-              {/* Inner circle for better face positioning */}
-              <div className={`absolute inset-4 rounded-full border-2 transition-colors duration-300 ${
-                blinkDetected ? 'border-green-400/50' : 'border-red-400/50'
-              }`}>
-              </div>
-              
-              {/* Alignment markers - Top, Bottom, Left, Right */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-1 w-6 bg-green-400"></div>
-              
-              {/* Blink detected checkmark */}
-              {blinkDetected && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-green-500 rounded-full p-4 animate-pulse">
-                    <CheckCircle2 className="h-12 w-12 text-white" />
-                  </div>
+          {/* Circular Camera View Container */}
+          <div className="relative mx-auto" style={{ width: '100%', maxWidth: '280px', aspectRatio: '1' }}>
+            {/* White background */}
+            <div className="absolute inset-0 bg-white rounded-full"></div>
+            
+            {/* Circular clipped video using CSS */}
+            <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-red-500 shadow-2xl">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+                style={{ 
+                  transform: 'scaleX(-1)',
+                }}
+              />
+            </div>
+            
+            {/* Circular border overlay - turns green when blink detected */}
+            <div className={`absolute inset-0 rounded-full border-4 shadow-2xl transition-colors duration-300 pointer-events-none ${
+              blinkDetected ? 'border-green-400' : 'border-red-500'
+            }`}>
+            </div>
+            
+            {/* Inner circle for better face positioning */}
+            <div className={`absolute inset-4 rounded-full border-2 transition-colors duration-300 pointer-events-none ${
+              blinkDetected ? 'border-green-400/50' : 'border-red-400/50'
+            }`}>
+            </div>
+            
+            {/* Alignment markers - Top, Bottom, Left, Right */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-1 w-6 bg-green-400"></div>
+            
+            {/* Blink detected checkmark */}
+            {blinkDetected && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="bg-green-500 rounded-full p-4 animate-pulse">
+                  <CheckCircle2 className="h-12 w-12 text-white" />
                 </div>
-              )}
-              
-              {/* Instruction text */}
-              <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg whitespace-nowrap">
-                <p className="text-sm font-semibold">
-                  {blinkDetected ? "FACE DETECTED" : "POSITION YOUR FACE IN THE CENTRE"}
-                </p>
               </div>
+            )}
+            
+            {/* Instruction text */}
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+              <p className="text-sm font-semibold">
+                {blinkDetected ? "FACE DETECTED" : "POSITION YOUR FACE IN THE CENTRE"}
+              </p>
             </div>
           </div>
           
           {/* Status Text */}
-          <div className="absolute bottom-4 left-0 right-0 text-center">
-            <div className="inline-block bg-black/70 text-white px-6 py-2 rounded-full">
+          <div className="mt-16 text-center">
+            <div className="inline-block bg-slate-800 text-white px-6 py-2 rounded-full">
               <p className="text-sm font-semibold">
                 {status === 'detecting' && !blinkDetected && "👁️ Please blink"}
                 {status === 'blink-detected' && "✅ Blink detected!"}

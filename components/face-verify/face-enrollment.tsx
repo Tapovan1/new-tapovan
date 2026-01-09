@@ -105,15 +105,56 @@ export default function FaceEnrollment({ defaultTeacherId, onSuccess }: FaceEnro
     
     if (!context) return;
     
+    // Set canvas to video dimensions
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+    
+    // Draw the full video frame first
     context.drawImage(video, 0, 0);
     
-    canvas.toBlob((blob) => {
+    // Calculate circular crop dimensions (65% of width, centered)
+    const circleSize = Math.min(canvas.width, canvas.height) * 0.65;
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = circleSize / 2;
+    
+    // Create a new canvas for the circular crop
+    const cropCanvas = document.createElement('canvas');
+    const cropSize = circleSize;
+    cropCanvas.width = cropSize;
+    cropCanvas.height = cropSize;
+    const cropContext = cropCanvas.getContext('2d');
+    
+    if (!cropContext) {
+      toast.error("Failed to create crop canvas");
+      return;
+    }
+    
+    // Draw circular clipping path
+    cropContext.beginPath();
+    cropContext.arc(cropSize / 2, cropSize / 2, cropSize / 2, 0, Math.PI * 2);
+    cropContext.closePath();
+    cropContext.clip();
+    
+    // Draw the cropped portion from the original canvas
+    cropContext.drawImage(
+      canvas,
+      centerX - radius,
+      centerY - radius,
+      circleSize,
+      circleSize,
+      0,
+      0,
+      cropSize,
+      cropSize
+    );
+    
+    // Convert circular crop to blob
+    cropCanvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], 'enrollment-photo.jpg', { type: 'image/jpeg' });
         setFaceImage(file);
-        console.log(`📸 Enrollment photo captured: ${blob.size} bytes`);
+        console.log(`📸 Circular enrollment photo captured: ${blob.size} bytes`);
         toast.success("Photo captured!");
         stopCamera();
       }
@@ -277,37 +318,54 @@ export default function FaceEnrollment({ defaultTeacherId, onSuccess }: FaceEnro
 
               {cameraActive && (
                 <div className="space-y-4">
-                  <div className="relative">
+                  {/* UIDAI Aadhaar Style - Only Circular Portion Visible */}
+                  <div className="relative bg-white rounded-xl p-8">
+                    {/* Hidden video element for MediaPipe */}
                     <video
                       ref={videoRef}
                       autoPlay
                       playsInline
                       muted
-                      className="w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-black"
+                      className="hidden"
                     />
                     <canvas ref={canvasRef} className="hidden" />
                     
-                    {/* Circular Face Guide - UIDAI Style */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="relative" style={{ width: '65%', aspectRatio: '1' }}>
-                        {/* Main circular guide - Red border like UIDAI */}
-                        <div className="absolute inset-0 rounded-full border-4 border-red-500 shadow-2xl">
-                        </div>
-                        
-                        {/* Inner circle for better face positioning */}
-                        <div className="absolute inset-4 rounded-full border-2 border-red-400/50">
-                        </div>
-                        
-                        {/* Alignment markers - Top, Bottom, Left, Right */}
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
-                        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-1 w-6 bg-green-400"></div>
-                        
-                        {/* Instruction text */}
-                        <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-lg whitespace-nowrap">
-                          <p className="text-sm font-semibold">POSITION YOUR FACE IN THE CENTRE</p>
-                        </div>
+                    {/* Circular Camera View Container */}
+                    <div className="relative mx-auto" style={{ width: '100%', maxWidth: '280px', aspectRatio: '1' }}>
+                      {/* White background */}
+                      <div className="absolute inset-0 bg-white rounded-full"></div>
+                      
+                      {/* Circular clipped video using CSS */}
+                      <div className="absolute inset-0 rounded-full overflow-hidden border-4 border-red-500 shadow-2xl">
+                        <video
+                          ref={videoRef}
+                          autoPlay
+                          playsInline
+                          muted
+                          className="w-full h-full object-cover"
+                          style={{ 
+                            transform: 'scaleX(-1)',
+                          }}
+                        />
+                      </div>
+                      
+                      {/* Circular border overlay */}
+                      <div className="absolute inset-0 rounded-full border-4 border-red-500 shadow-2xl pointer-events-none">
+                      </div>
+                      
+                      {/* Inner circle for better face positioning */}
+                      <div className="absolute inset-4 rounded-full border-2 border-red-400/50 pointer-events-none">
+                      </div>
+                      
+                      {/* Alignment markers - Top, Bottom, Left, Right */}
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 w-1 h-6 bg-green-400"></div>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-2 w-1 h-6 bg-green-400"></div>
+                      <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 h-1 w-6 bg-green-400"></div>
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 h-1 w-6 bg-green-400"></div>
+                      
+                      {/* Instruction text */}
+                      <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-lg whitespace-nowrap">
+                        <p className="text-sm font-semibold">POSITION YOUR FACE IN THE CENTRE</p>
                       </div>
                     </div>
                   </div>
